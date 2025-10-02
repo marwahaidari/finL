@@ -1,0 +1,36 @@
+<h1>Manage Users</h1>
+<table border="1" cellpadding="5">
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Actions</th>
+    </tr>
+    <% users.forEach(u=> { %>
+        <tr>
+            <td>
+                <%= u.id %>
+            </td>
+            <td>
+                <%= u.name %>
+            </td>
+            <td>
+                <%= u.email %>
+            </td>
+            <td>
+                <form action="/admin/users/role/<%= u.id %>" method="POST">
+                    <select name="role" onchange="this.form.submit()">
+                        <option value="user" <%=u.role==='user' ? 'selected' : '' %>>User</option>
+                        <option value="admin" <%=u.role==='admin' ? 'selected' : '' %>>Admin</option>
+                    </select>
+                </form>
+            </td>
+            <td>
+                <form action="/admin/users/delete/<%= u.id %>" method="POST" onsubmit="return confirm('Delete user?')">
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        <% }) %>
+</table>

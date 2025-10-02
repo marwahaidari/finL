@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Admin Reports</title>
+</head>
+
+<body>
+    <h1>Admin Reports</h1>
+    <a href="/dashboard">Back to Dashboard</a> |
+    <a href="/logout">Logout</a>
+
+    <!-- 📊 Summary Section -->
+    <h2>Summary</h2>
+    <ul>
+        <li>Total Users: <%= summary.totalUsers %>
+        </li>
+        <li>Total Orders: <%= summary.totalOrders %>
+        </li>
+        <li>Paid Orders: <%= summary.paidOrders %>
+        </li>
+        <li>Unpaid Orders: <%= summary.unpaidOrders %>
+        </li>
+    </ul>
+
+    <!-- 📈 Chart Section -->
+    <h2>Orders Chart</h2>
+    <div>
+        <p>Paid Orders: <%= chartData.paid %>
+        </p>
+        <p>Unpaid Orders: <%= chartData.unpaid %>
+        </p>
+        <!-- بعداً میشه با Chart.js یا Recharts یه نمودار واقعی اضافه کرد -->
+    </div>
+
+    <!-- 📋 Orders Table -->
+    <h2>All Orders</h2>
+    <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>User ID</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Paid</th>
+                <th>Created At</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (orders.length===0) { %>
+                <tr>
+                    <td colspan="6">No orders found.</td>
+                </tr>
+                <% } else { %>
+                    <% orders.forEach(order=> { %>
+                        <tr>
+                            <td>
+                                <%= order.id %>
+                            </td>
+                            <td>
+                                <%= order.user_id %>
+                            </td>
+                            <td>
+                                <%= order.title %>
+                            </td>
+                            <td>
+                                <%= order.description %>
+                            </td>
+                            <td>
+                                <%= order.paid ? "✅" : "❌" %>
+                            </td>
+                            <td>
+                                <%= new Date(order.created_at).toLocaleString() %>
+                            </td>
+                        </tr>
+                        <% }) %>
+                            <% } %>
+        </tbody>
+    </table>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        socket.on('newOrder', (data) => {
+            alert(`🆕 New Order: ${data.title} by ${data.user}`);
+        });
+
+        socket.on('orderPaid', (data) => {
+            alert(`💰 Order #${data.orderId} has been paid!`);
+        });
+    </script>
+
+</body>
+
+</html>

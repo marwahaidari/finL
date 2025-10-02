@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Create Order</title>
+</head>
+
+<body>
+    <h1>Create New Order</h1>
+    <form action="/orders/create" method="POST">
+        <input type="text" name="title" placeholder="Title" required><br>
+        <textarea name="description" placeholder="Description" required></textarea><br>
+        <button type="submit">Create</button>
+    </form>
+    <a href="/orders">Back to Orders</a>
+</body>
+
+</html>

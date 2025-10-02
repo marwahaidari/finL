@@ -1,0 +1,36 @@
+<%- include('../layouts/header', { title: 'Departments' }) %>
+
+    <h2>Departments</h2>
+    <a href="/departments/new" class="btn btn-primary mb-3">Add Department</a>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% departments.forEach((dept, index)=> { %>
+                <tr>
+                    <td>
+                        <%= index + 1 %>
+                    </td>
+                    <td>
+                        <%= dept.name %>
+                    </td>
+                    <td>
+                        <%= dept.description %>
+                    </td>
+                    <td>
+                        <a href="/departments/edit/<%= dept.id %>" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="/departments/delete/<%= dept.id %>" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+                <% }) %>
+        </tbody>
+    </table>
+
+    <%- include('../layouts/footer') %>

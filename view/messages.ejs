@@ -1,0 +1,24 @@
+<h1>Messages for Order #<%= orderId %>
+</h1>
+<a href="/dashboard">Back to Dashboard</a> | <a href="/logout">Logout</a>
+
+<div style="border:1px solid #ccc; padding:10px; max-width:600px;">
+    <% if (messages.length===0) { %>
+        <p>No messages yet.</p>
+        <% } else { %>
+            <% messages.forEach(msg=> { %>
+                <div style="margin-bottom:10px;">
+                    <strong>
+                        <%= msg.sender_name %>:
+                    </strong>
+                    <%= msg.message %>
+                        <small style="color:gray;">(<%= new Date(msg.created_at).toLocaleString() %>)</small>
+                </div>
+                <% }) %>
+                    <% } %>
+</div>
+
+<form action="/orders/<%= orderId %>/messages" method="POST" style="margin-top:20px;">
+    <textarea name="message" rows="3" cols="40" placeholder="Type your message..." required></textarea><br>
+    <button type="submit">Send</button>
+</form>

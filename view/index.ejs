@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+        <%= title || "پرتال دولت الکترونیک" %>
+    </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 text-gray-900">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-green-600">پرتال دولت الکترونیک</h1>
+
+            <div class="flex gap-4 items-center">
+                <% if (user) { %>
+                    <span class="font-medium">👋 سلام، <%= user.name %></span>
+                    <a href="/dashboard"
+                        class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600">داشبورد</a>
+                    <a href="/logout" class="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600">خروج</a>
+                    <% } else { %>
+                        <a href="/login" class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600">ورود</a>
+                        <a href="/register" class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600">ثبت
+                            نام</a>
+                        <% } %>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-gradient-to-r from-green-400 to-blue-500 text-white text-center py-20">
+        <h2 class="text-4xl font-extrabold mb-4">خوش آمدید به پرتال خدمات الکترونیک</h2>
+        <p class="text-lg mb-6">اینجا می‌توانید به آسانی خدمات آنلاین را دریافت کنید</p>
+        <% if (!user) { %>
+            <a href="/register"
+                class="px-6 py-3 bg-white text-green-600 font-semibold rounded-lg shadow hover:bg-gray-100">
+                همین حالا شروع کنید
+            </a>
+            <% } else { %>
+                <a href="/dashboard"
+                    class="px-6 py-3 bg-white text-green-600 font-semibold rounded-lg shadow hover:bg-gray-100">
+                    مشاهده داشبورد
+                </a>
+                <% } %>
+    </header>
+
+    <!-- Stats Section -->
+    <section class="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div class="bg-white shadow-lg p-6 rounded-xl text-center">
+            <h3 class="text-2xl font-bold text-green-500">
+                <%= (stats && stats.totalUsers) ? stats.totalUsers : 0 %>
+            </h3>
+            <p class="text-gray-600">کاربران</p>
+        </div>
+        <div class="bg-white shadow-lg p-6 rounded-xl text-center">
+            <h3 class="text-2xl font-bold text-blue-500">
+                <%= (stats && stats.totalOrders) ? stats.totalOrders : 0 %>
+            </h3>
+            <p class="text-gray-600">سفارش‌ها</p>
+        </div>
+        <div class="bg-white shadow-lg p-6 rounded-xl text-center">
+            <h3 class="text-2xl font-bold text-yellow-500">
+                <%= (stats && stats.totalRequests) ? stats.totalRequests : 0 %>
+            </h3>
+            <p class="text-gray-600">درخواست‌ها</p>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="bg-gray-100 py-16">
+        <div class="max-w-7xl mx-auto px-6">
+            <h3 class="text-3xl font-bold text-center mb-12">خدمات ویژه ما</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white shadow-lg rounded-xl p-6 hover:shadow-2xl transition">
+                    <h4 class="text-xl font-semibold mb-3">امنیت بالا</h4>
+                    <p class="text-gray-600">ورود دو مرحله‌ای، رمزگذاری و سیستم ضد حمله بروت فورس.</p>
+                </div>
+                <div class="bg-white shadow-lg rounded-xl p-6 hover:shadow-2xl transition">
+                    <h4 class="text-xl font-semibold mb-3">پروفایل کامل</h4>
+                    <p class="text-gray-600">مدیریت حساب، آپلود تصویر پروفایل و تغییر رمز عبور.</p>
+                </div>
+                <div class="bg-white shadow-lg rounded-xl p-6 hover:shadow-2xl transition">
+                    <h4 class="text-xl font-semibold mb-3">بازیابی سریع</h4>
+                    <p class="text-gray-600">بازیابی رمز از طریق ایمیل و لینک امن.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 text-center py-6 mt-12">
+        <p>© <%= new Date().getFullYear() %> پرتال دولت الکترونیک. همه حقوق محفوظ است.</p>
+    </footer>
+
+</body>
+
+</html>

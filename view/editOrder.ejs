@@ -1,0 +1,6 @@
+<h2>Edit Order</h2>
+<form action="/orders/edit/<%= order.id %>" method="POST">
+    <input type="text" name="title" value="<%= order.title %>" required>
+    <textarea name="description"><%= order.description %></textarea>
+    <button type="submit">Update</button>
+</form>

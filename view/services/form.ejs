@@ -1,0 +1,38 @@
+<%- include('../layouts/header', { title: 'Service Form' }) %>
+
+    <h2>
+        <%= service ? 'Edit Service' : 'New Service' %>
+    </h2>
+
+    <form method="POST" action="<%= service ? '/services/edit/' + service.id : '/services/new' %>">
+        <div class="mb-3">
+            <label class="form-label">Service Name</label>
+            <input type="text" name="name" class="form-control" value="<%= service ? service.name : '' %>" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Department</label>
+            <select name="department_id" class="form-control" required>
+                <% departments.forEach(dept=> { %>
+                    <option value="<%= dept.id %>" <%=service && service.department_id===dept.id ? 'selected' : '' %>>
+                        <%= dept.name %>
+                    </option>
+                    <% }) %>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Fee ($)</label>
+            <input type="number" name="fee" class="form-control" value="<%= service ? service.fee : '' %>" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control"
+                required><%= service ? service.description : '' %></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-success">Save</button>
+    </form>
+
+    <%- include('../layouts/footer') %>

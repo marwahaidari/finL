@@ -1,0 +1,43 @@
+<%- include('../layouts/header', { title: 'Services' }) %>
+
+    <h2>Services</h2>
+    <a href="/services/new" class="btn btn-primary mb-3">Add Service</a>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Service Name</th>
+                <th>Department</th>
+                <th>Fee</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% services.forEach((service, index)=> { %>
+                <tr>
+                    <td>
+                        <%= index + 1 %>
+                    </td>
+                    <td>
+                        <%= service.name %>
+                    </td>
+                    <td>
+                        <%= service.department_name %>
+                    </td>
+                    <td>$<%= service.fee %>
+                    </td>
+                    <td>
+                        <%= service.description %>
+                    </td>
+                    <td>
+                        <a href="/services/edit/<%= service.id %>" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="/services/delete/<%= service.id %>" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+                <% }) %>
+        </tbody>
+    </table>
+
+    <%- include('../layouts/footer') %>

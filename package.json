@@ -1,0 +1,43 @@
+{
+  "name": "e-government-citizen-portal",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "aws-sdk": "^2.1692.0",
+    "axios": "^1.12.2",
+    "basic-ftp": "^5.0.5",
+    "bcryptjs": "^3.0.2",
+    "chart.js": "^4.5.0",
+    "connect-flash": "^0.1.1",
+    "dotenv": "^17.2.1",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "express-session": "^1.18.2",
+    "express-validator": "^7.2.1",
+    "file-type": "^21.0.0",
+    "ioredis": "^5.7.0",
+    "json2csv": "^6.0.0-alpha.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "node-schedule": "^2.1.1",
+    "nodemailer": "^7.0.5",
+    "openai": "^5.20.0",
+    "pg": "^8.16.3",
+    "qrcode": "^1.5.4",
+    "rate-limit-redis": "^4.2.2",
+    "schedule": "^0.5.0",
+    "socket.io": "^4.8.1",
+    "speakeasy": "^2.0.0",
+    "unzipper": "^0.12.3",
+    "uuid": "^13.0.0"
+  }
+}

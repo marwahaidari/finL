@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Your Orders</title>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <h1>Your Orders</h1>
+    <a href="/dashboard">Back to Dashboard</a> |
+    <a href="/logout">Logout</a> |
+    <a href="/orders/create">Create New Order</a>
+
+    <table border="1" cellpadding="5" cellspacing="0" id="ordersTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Created At</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (orders.length===0) { %>
+                <tr>
+                    <td colspan="6">No orders found.</td>
+                </tr>
+                <% } else { %>
+                    <% orders.forEach(order=> { %>
+                        <tr id="order-<%= order.id %>">
+                            <td>
+                                <%= order.id %>
+                            </td>
+                            <td>
+                                <%= order.title %>
+                            </td>
+                            <td>
+                                <%= order.description %>
+                            </td>
+                            <td>
+                                <%= new Date(order.created_at).toLocaleString() %>
+                            </td>
+                            <td>
+                                <%= order.paid ? "Paid ✅" : "Unpaid ❌" %>
+                            </td>
+                            <td>
+                                <% if (!order.paid) { %>
+                                    <form action="/orders/pay/<%= order.id %>" method="POST" style="display:inline;">
+                                        <button type="submit">Pay</button>
+                                    </form>
+                                    <% } %>
+                            </td>
+                        </tr>
+                        <% }) %>
+                            <% } %>
+        </tbody>
+    </table>
+
+    <script>
+        const socket = io();
+
+        // وقتی سفارش جدید ساخته شد
+        socket.on('orderCreated', (order) => {
+            const table = document.querySelector("#ordersTable tbody");
+            const row = document.createElement("tr");
+            row.id = `order-${order.id}`;
+            row.innerHTML = `
+                <td>${order.id}</td>
+                <td>${order.title}</td>
+                <td>${order.description}</td>
+                <td>${new Date(order.created_at).toLocaleString()}</td>
+                <td>${order.paid ? "Paid ✅" : "Unpaid ❌"}</td>
+                <td>
+                    ${!order.paid ? `<form action="/orders/pay/${order.id}" method="POST" style="display:inline;">
+                        <button type="submit">Pay</button>
+                    </form>` : ""}
+                </td>
+            `;
+            table.appendChild(row);
+        });
+
+        // وقتی سفارشی پرداخت شد
+        socket.on('orderPaid', (order) => {
+            const row = document.querySelector(`#order-${order.id}`);
+            if (row) {
+                row.children[4].innerText = "Paid ✅";
+                row.children[5].innerHTML = "";
+            }
+        });
+    </script>
+</body>
+
+</html>
