@@ -13,17 +13,17 @@ dotenv.config();
 // Database pool
 const pool = require('./db');
 
-// Routers
+// Routers (may throw if paths are wrong)
 const authRouter = require('./routes/auth');
 const indexRouter = require('./routes/index');
 const orderRouter = require('./routes/orderRoutes');
 const assignmentRoutes = require('./routes/assignmentRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
+// const notificationRoutes = require('./routes/notificationRoutes');
 const requestsRouter = require('./routes/request');
 const paymentRoutes = require('./routes/paymentRoutes');
 const settingsRoutes = require('./routes/settings');
 const backupRoutes = require('./routes/backupRoutes');
-const uploadRoutes = require("./routes/uploadRoutes");
+const uploadRoutes = require('./routes/uploadRoutes');
 const dashboardRoutes = require('./routes/dashboard');
 
 // Middlewares
@@ -33,18 +33,51 @@ const { apiLimiter, authLimiter, uploadLimiter, adminLimiter } = require('./midd
 const Backup = require('./utils/Backup');
 
 // ===========================
+// Helper to safely mount routers/middlewares
+// ===========================
+function isMiddleware(fn) {
+    return typeof fn === 'function'
+        || (fn && (typeof fn.use === 'function' || typeof fn.handle === 'function' || Array.isArray(fn)));
+}
+
+function mount(name, pathOrRouter, maybeRouter) {
+    // mount(name, path, router) OR mount(name, router) for root mount
+    let mountPath = null;
+    let router = null;
+
+    if (maybeRouter === undefined) {
+        // mount(name, router)
+        router = pathOrRouter;
+        mountPath = typeof name === 'string' ? name : '/';
+    } else {
+        mountPath = pathOrRouter;
+        router = maybeRouter;
+    }
+
+    if (!isMiddleware(router)) {
+        console.error(`❌ Cannot mount ${mountPath} — "${name}" is not a valid middleware/router. Value:`, router);
+        return;
+    }
+    app.use(mountPath, router);
+    console.log(`✅ Mounted ${mountPath}`);
+}
+
+// ===========================
 // App & Server
 // ===========================
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// expose io to routes if needed
+app.set('io', io);
+
 // ===========================
 // View engine
 // ===========================
 app.set('view engine', 'ejs');
-// مسیر درست فولدر view
-app.set('views', path.join(__dirname, 'view'));
+// If your views folder is named "views" use 'views'. You had 'view' originally — update if necessary.
+app.set('views', path.join(__dirname, 'view')); // change 'view' -> 'views' if your folder is named views
 
 // ===========================
 // Body parser
@@ -76,15 +109,31 @@ app.use((req, res, next) => {
 });
 
 // ===========================
-// Rate limiting
+// Rate limiting (validate middlewares)
 // ===========================
-app.use('/api', apiLimiter);
-app.use(['/login'], authLimiter);
-app.use('/upload', uploadLimiter);
-app.use('/admin', adminLimiter);
+if (isMiddleware(apiLimiter)) {
+    app.use('/api', apiLimiter);
+} else {
+    console.warn('⚠️  apiLimiter is not a valid middleware — skipping mount. Value:', apiLimiter);
+}
+if (isMiddleware(authLimiter)) {
+    app.use(['/login'], authLimiter);
+} else {
+    console.warn('⚠️  authLimiter is not a valid middleware — skipping mount. Value:', authLimiter);
+}
+if (isMiddleware(uploadLimiter)) {
+    app.use('/upload', uploadLimiter);
+} else {
+    console.warn('⚠️  uploadLimiter is not a valid middleware — skipping mount. Value:', uploadLimiter);
+}
+if (isMiddleware(adminLimiter)) {
+    app.use('/admin', adminLimiter);
+} else {
+    console.warn('⚠️  adminLimiter is not a valid middleware — skipping mount. Value:', adminLimiter);
+}
 
 // ===========================
-// Routes
+// Routes (safe mounting)
 // ===========================
 // ترتیب روت‌ها مهمه
 app.use('/', indexRouter);
@@ -100,7 +149,7 @@ app.use('/api/payments', paymentRoutes);
 app.use("/api", uploadRoutes);
 
 // ===========================
-// Socket.IO
+// Socket.IO events
 // ===========================
 io.on('connection', (socket) => {
     console.log('✅ User connected to socket');
@@ -108,7 +157,6 @@ io.on('connection', (socket) => {
         console.log('❌ User disconnected');
     });
 });
-app.set('io', io);
 
 // ===========================
 // Initial backup + scheduled backup

@@ -105,10 +105,13 @@ router.get('/logout', ensureAuth, (req, res) => {
 // ===============================
 // Orders
 // ===============================
+
 router.get('/orders', ensureAuth, async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const search = req.query.search || '';
     const { orders, totalPages } = await Order.findByUserPaginated(req.session.user.id, page, search);
+
+    // console.log('Order object:', Order);
     res.render('orders', { title: 'سفارش‌ها', orders, totalPages, page, search });
 });
 
