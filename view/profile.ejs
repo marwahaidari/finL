@@ -1,147 +1,226 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>
-        <%= user?.name || 'User' %> - Profile
+        <%= user?.name || 'کاربر' %> - پروفایل
     </title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha512-p1CmR4F8O0wY6bL3Ox+Kw3N0d8PjZq3B3yV6Z7bD6d3Gz8T1Ek8+uGyz+6kzZh6XG0N3a1XQFJ0WlRzD7B4JbA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            direction: rtl;
+            font-family: Vazir, sans-serif;
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100">
-    <div class="min-h-screen flex flex-col items-center py-8">
-        <h1 class="text-3xl font-bold mb-6">Welcome, <%= user?.name || 'User' %> 👋</h1>
+<body class="bg-gray-100 font-sans">
+    <div class="min-h-screen flex flex-col items-center py-8 px-4">
+        <h1 class="text-3xl font-bold mb-6">سلام <%= user?.name || 'کاربر' %> 👋</h1>
 
         <% if (error_msg) { %>
-            <div class="w-full max-w-4xl mb-4 p-4 bg-red-100 text-red-700 rounded-md">
-                <%= error_msg %>
+            <div class="w-full max-w-5xl mb-4 p-4 bg-red-100 text-red-700 rounded-md flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>
+                    <%= error_msg %>
+                </span>
             </div>
             <% } %>
 
                 <% if (success_msg) { %>
-                    <div class="w-full max-w-4xl mb-4 p-4 bg-green-100 text-green-700 rounded-md">
-                        <%= success_msg %>
+                    <div
+                        class="w-full max-w-5xl mb-4 p-4 bg-green-100 text-green-700 rounded-md flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>
+                            <%= success_msg %>
+                        </span>
                     </div>
                     <% } %>
 
-                        <!-- Profile Info Update -->
-                        <div class="w-full max-w-4xl bg-white p-6 rounded-lg shadow-md mb-6">
-                            <h2 class="text-2xl font-semibold mb-4">Profile Information</h2>
-                            <form action="/profile" method="POST" enctype="multipart/form-data" class="space-y-4">
-                                <div>
-                                    <label for="name" class="block font-medium">Name</label>
-                                    <input type="text" id="name" name="name" value="<%= user?.name || '' %>"
-                                        class="w-full p-2 border rounded-md">
-                                </div>
-                                <div>
-                                    <label for="email" class="block font-medium">Email</label>
-                                    <input type="email" id="email" name="email" value="<%= user?.email || '' %>"
-                                        class="w-full p-2 border rounded-md">
-                                </div>
-                                <div>
-                                    <label for="avatar" class="block font-medium">Avatar (optional)</label>
-                                    <input type="file" id="avatar" name="avatar" class="w-full p-2 border rounded-md">
-                                </div>
-                                <button type="submit"
-                                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Update
-                                    Profile</button>
-                            </form>
-                        </div>
+                        <div class="w-full max-w-5xl bg-white p-6 rounded-xl shadow-lg space-y-6">
+                            <!-- Tabs -->
+                            <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
+                                <button
+                                    class="tab-btn px-4 py-2 font-medium text-blue-600 border-b-2 border-blue-600 focus:outline-none whitespace-nowrap"
+                                    data-tab="profile">پروفایل</button>
+                                <button
+                                    class="tab-btn px-4 py-2 font-medium text-gray-500 hover:text-blue-600 focus:outline-none whitespace-nowrap"
+                                    data-tab="password">تغییر رمز عبور</button>
+                                <button
+                                    class="tab-btn px-4 py-2 font-medium text-gray-500 hover:text-blue-600 focus:outline-none whitespace-nowrap"
+                                    data-tab="2fa">احراز دو مرحله‌ای</button>
+                                <button
+                                    class="tab-btn px-4 py-2 font-medium text-gray-500 hover:text-blue-600 focus:outline-none whitespace-nowrap"
+                                    data-tab="history">سوابق</button>
+                                <button
+                                    class="tab-btn px-4 py-2 font-medium text-gray-500 hover:text-blue-600 focus:outline-none whitespace-nowrap"
+                                    data-tab="reviews">بازخوردها</button>
+                                <button
+                                    class="tab-btn px-4 py-2 font-medium text-red-600 hover:text-red-800 focus:outline-none whitespace-nowrap"
+                                    data-tab="delete">حذف حساب</button>
+                            </div>
 
-                        <!-- Change Password -->
-                        <div class="w-full max-w-4xl bg-white p-6 rounded-lg shadow-md mb-6">
-                            <h2 class="text-2xl font-semibold mb-4">Change Password</h2>
-                            <form action="/profile/change-password" method="POST" class="space-y-4">
-                                <div>
-                                    <label for="currentPassword" class="block font-medium">Current Password</label>
-                                    <input type="password" id="currentPassword" name="currentPassword"
-                                        class="w-full p-2 border rounded-md" required>
-                                </div>
-                                <div>
-                                    <label for="newPassword" class="block font-medium">New Password</label>
-                                    <input type="password" id="newPassword" name="newPassword"
-                                        class="w-full p-2 border rounded-md" required>
-                                </div>
-                                <button type="submit"
-                                    class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">Change
-                                    Password</button>
-                            </form>
-                        </div>
-
-                        <!-- Two-Factor Authentication -->
-                        <div class="w-full max-w-4xl bg-white p-6 rounded-lg shadow-md mb-6">
-                            <h2 class="text-2xl font-semibold mb-4">Two-Factor Authentication</h2>
-                            <% if (user?.twoFactorEnabled) { %>
-                                <p class="mb-4 text-green-600">✅ 2FA is currently enabled on your account.</p>
-                                <form action="/2fa/disable" method="POST">
+                            <!-- Tab Contents -->
+                            <div class="tab-content" id="profile-tab">
+                                <h2 class="text-2xl font-semibold mb-4">اطلاعات پروفایل</h2>
+                                <form action="/profile" method="POST" enctype="multipart/form-data" class="space-y-4">
+                                    <div>
+                                        <label for="name" class="block font-medium">نام و نام خانوادگی</label>
+                                        <input type="text" id="name" name="name" value="<%= user?.name || '' %>"
+                                            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="email" class="block font-medium">ایمیل سازمانی</label>
+                                        <input type="email" id="email" name="email" value="<%= user?.email || '' %>"
+                                            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="phone" class="block font-medium">شماره تماس</label>
+                                        <input type="text" id="phone" name="phone" value="<%= user?.phone || '' %>"
+                                            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="department" class="block font-medium">اداره / دپارتمان</label>
+                                        <input type="text" id="department" name="department"
+                                            value="<%= user?.department || '' %>"
+                                            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="avatar" class="block font-medium">تصویر پروفایل (اختیاری)</label>
+                                        <input type="file" id="avatar" name="avatar"
+                                            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
                                     <button type="submit"
-                                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Disable
-                                        2FA</button>
+                                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200">بروزرسانی
+                                        پروفایل</button>
                                 </form>
-                                <% } else { %>
-                                    <p class="mb-4 text-gray-600">2FA adds an extra layer of security to your account.
-                                    </p>
-                                    <form action="/2fa/setup" method="POST">
+                            </div>
+
+                            <div class="tab-content hidden" id="password-tab">
+                                <h2 class="text-2xl font-semibold mb-4">تغییر رمز عبور</h2>
+                                <form action="/profile/change-password" method="POST" class="space-y-4">
+                                    <div>
+                                        <label for="currentPassword" class="block font-medium">رمز فعلی</label>
+                                        <input type="password" id="currentPassword" name="currentPassword"
+                                            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                            required>
+                                    </div>
+                                    <div>
+                                        <label for="newPassword" class="block font-medium">رمز جدید</label>
+                                        <input type="password" id="newPassword" name="newPassword"
+                                            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                            required>
+                                    </div>
+                                    <div>
+                                        <label for="confirmPassword" class="block font-medium">تأیید رمز جدید</label>
+                                        <input type="password" id="confirmPassword" name="confirmPassword"
+                                            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                            required>
+                                    </div>
+                                    <button type="submit"
+                                        class="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition duration-200">تغییر
+                                        رمز</button>
+                                </form>
+                            </div>
+
+                            <div class="tab-content hidden" id="2fa-tab">
+                                <h2 class="text-2xl font-semibold mb-4">احراز هویت دو مرحله‌ای</h2>
+                                <% if (user?.twoFactorEnabled) { %>
+                                    <p class="mb-4 text-green-600 flex items-center gap-2"><i
+                                            class="fa-solid fa-lock"></i> ۲FA فعال
+                                        است.</p>
+                                    <form action="/2fa/disable" method="POST">
                                         <button type="submit"
-                                            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Enable
-                                            2FA</button>
+                                            class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200">غیرفعال
+                                            کردن</button>
                                     </form>
-                                    <% } %>
-                        </div>
+                                    <% } else { %>
+                                        <p class="mb-4 text-gray-600">برای امنیت بیشتر حساب خود، ۲FA را فعال کنید.</p>
+                                        <form action="/2fa/setup" method="POST">
+                                            <button type="submit"
+                                                class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200">فعال
+                                                کردن</button>
+                                        </form>
+                                        <% } %>
+                            </div>
 
-                        <!-- Orders History -->
-                        <div class="w-full max-w-4xl bg-white p-6 rounded-lg shadow-md mb-6">
-                            <h2 class="text-2xl font-semibold mb-4">Order History</h2>
-                            <% if (orders && orders.length> 0) { %>
-                                <ul class="space-y-2">
-                                    <% orders.forEach(order=> { %>
-                                        <li class="border p-3 rounded-md flex justify-between">
-                                            <span>Order #<%= order.id %> - <%= order.date %></span>
-                                            <span class="font-semibold">$<%= order.total %></span>
-                                        </li>
-                                        <% }) %>
-                                </ul>
-                                <% } else { %>
-                                    <p class="text-gray-500">No orders found.</p>
-                                    <% } %>
-                        </div>
+                            <div class="tab-content hidden" id="history-tab">
+                                <h2 class="text-2xl font-semibold mb-4">سوابق فعالیت‌ها</h2>
+                                <% if (history && history.length> 0) { %>
+                                    <ul class="space-y-2">
+                                        <% history.forEach(h=> { %>
+                                            <li
+                                                class="border p-4 rounded-lg flex justify-between items-center hover:shadow-md transition duration-150">
+                                                <span>
+                                                    <%= h.title %> - <%= h.date %>
+                                                </span>
+                                                <span class="font-semibold">
+                                                    <%= h.status %>
+                                                </span>
+                                            </li>
+                                            <% }) %>
+                                    </ul>
+                                    <% } else { %>
+                                        <p class="text-gray-500">هیچ سوابقی یافت نشد.</p>
+                                        <% } %>
+                            </div>
 
-                        <!-- Reviews -->
-                        <div class="w-full max-w-4xl bg-white p-6 rounded-lg shadow-md mb-6">
-                            <h2 class="text-2xl font-semibold mb-4">Your Reviews</h2>
-                            <% if (reviews && reviews.length> 0) { %>
-                                <ul class="space-y-2">
-                                    <% reviews.forEach(review=> { %>
-                                        <li class="border p-3 rounded-md">
-                                            <p class="font-semibold">
-                                                <%= review.restaurantName %>
-                                            </p>
-                                            <p class="text-gray-600">
-                                                <%= review.comment %>
-                                            </p>
-                                            <p class="text-yellow-500">⭐ <%= review.rating %>
-                                            </p>
-                                        </li>
-                                        <% }) %>
-                                </ul>
-                                <% } else { %>
-                                    <p class="text-gray-500">No reviews yet.</p>
-                                    <% } %>
-                        </div>
+                            <div class="tab-content hidden" id="reviews-tab">
+                                <h2 class="text-2xl font-semibold mb-4">بازخوردها</h2>
+                                <% if (reviews && reviews.length> 0) { %>
+                                    <ul class="space-y-2">
+                                        <% reviews.forEach(review=> { %>
+                                            <li class="border p-4 rounded-lg hover:shadow-md transition duration-150">
+                                                <p class="font-semibold">
+                                                    <%= review.from %>
+                                                </p>
+                                                <p class="text-gray-600">
+                                                    <%= review.comment %>
+                                                </p>
+                                                <p class="text-yellow-500">⭐ <%= review.rating %>
+                                                </p>
+                                            </li>
+                                            <% }) %>
+                                    </ul>
+                                    <% } else { %>
+                                        <p class="text-gray-500">هیچ بازخوردی موجود نیست.</p>
+                                        <% } %>
+                            </div>
 
-                        <!-- Delete Account -->
-                        <div class="w-full max-w-4xl bg-white p-6 rounded-lg shadow-md">
-                            <h2 class="text-2xl font-semibold mb-4 text-red-600">Danger Zone</h2>
-                            <form action="/profile/delete-account" method="POST"
-                                onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone!')">
-                                <button type="submit"
-                                    class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Delete
-                                    Account</button>
-                            </form>
+                            <div class="tab-content hidden" id="delete-tab">
+                                <h2 class="text-2xl font-semibold mb-4 text-red-600">حذف حساب</h2>
+                                <form action="/profile/delete-account" method="POST"
+                                    onsubmit="return confirm('آیا مطمئن هستید که می‌خواهید حساب خود را حذف کنید؟ این عمل غیرقابل بازگشت است!')">
+                                    <button type="submit"
+                                        class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200">حذف
+                                        حساب</button>
+                                </form>
+                            </div>
+
                         </div>
     </div>
+
+    <script>
+        const tabs = document.querySelectorAll(".tab-btn");
+        const contents = document.querySelectorAll(".tab-content");
+
+        tabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                contents.forEach(c => c.classList.add("hidden"));
+                document.getElementById(tab.dataset.tab + "-tab").classList.remove("hidden");
+
+                tabs.forEach(t => t.classList.remove("text-blue-600", "border-b-2", "border-blue-600"));
+                tabs.forEach(t => t.classList.add("text-gray-500"));
+                tab.classList.add("text-blue-600", "border-b-2", "border-blue-600");
+                tab.classList.remove("text-gray-500");
+            });
+        });
+    </script>
 </body>
 
 </html>

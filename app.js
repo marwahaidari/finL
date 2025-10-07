@@ -1,4 +1,3 @@
-// app.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
@@ -94,7 +93,7 @@ app.use('/', dashboardRoutes);
 app.use('/orderRoutes', orderRouter);
 app.use('/assignments', assignmentRoutes);
 app.use('/requests', requestsRouter);
-app.use('/notifications', notificationRoutes);
+// app.use('/notifications', notificationRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api', backupRoutes);
 app.use('/api/payments', paymentRoutes);

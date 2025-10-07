@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تأیید حذف سفارش</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: Vazir, sans-serif;
+            background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+        }
+
+        .card {
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-6">
+
+    <div class="card p-8 w-full max-w-md text-center">
+        <i data-lucide="alert-triangle" class="mx-auto text-red-600 w-16 h-16 mb-4"></i>
+        <h1 class="text-2xl font-bold mb-4 text-gray-800">تأیید حذف سفارش</h1>
+
+        <p class="text-gray-600 mb-6">
+            آیا از حذف سفارش
+            <strong>#<%= order && order.id ? order.id : '---' %></strong>
+            با عنوان
+            "<strong>
+                <%= order && order.title ? order.title : '---' %>
+            </strong>"
+            اطمینان دارید؟ این عمل غیرقابل بازگشت است.
+        </p>
+
+        <form action="/orders/delete/<%= order.id %>" method="POST" class="flex flex-col gap-4">
+            <button type="submit"
+                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition">
+                <i data-lucide="trash-2"></i>
+                بله، حذف شود
+            </button>
+            <a href="/orders"
+                class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition">
+                <i data-lucide="x"></i>
+                انصراف
+            </a>
+        </form>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+
+</body>
+
+</html>

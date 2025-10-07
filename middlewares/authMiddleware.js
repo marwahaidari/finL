@@ -1,5 +1,3 @@
-
-
 const Audit = require('../utils/Audit');
 const speakeasy = require('speakeasy');
 const jwt = require('jsonwebtoken');
@@ -9,6 +7,8 @@ const DEFAULTS = {
     windowMs: 1 * 60 * 1000,
     lockTimeMs: 10 * 60 * 1000,
     maxInactivityMinutes: 30,
+    forgotPasswordMaxAttempts: 5,
+    forgotPasswordWindowMs: 15 * 60 * 1000,
 };
 
 const rateLimitStore = new Map();
@@ -34,14 +34,11 @@ function rateLimitCheck(key, opts = {}) {
         return { allowed: true, remaining: cfg.maxAttempts - 1 };
     }
 
-    // اگر فعلاً بلاک شده
     if (rec.blockedUntil && now < rec.blockedUntil) {
         return { allowed: false, blockedUntil: rec.blockedUntil };
     }
 
-    // بازه را بررسی کن
     if (now - rec.firstSeen > cfg.windowMs) {
-        // ریست کردن بازه
         rec.count = 1;
         rec.firstSeen = now;
         rec.blockedUntil = 0;
@@ -62,18 +59,20 @@ function rateLimitCheck(key, opts = {}) {
 }
 
 /**
- * ensureAuthenticated(allowedRoles = [], options = {})
+ * ensureAuthenticated
  * allowedRoles: [] یا ['admin','officer',...']
  * options:
  *   - require2FA: boolean
  *   - sessionTimeoutMinutes: number
- *   - rateLimit: { maxAttempts, windowMs, lockTimeMs }  (optional)
+ *   - rateLimit: { maxAttempts, windowMs, lockTimeMs } (اختیاری)
+ *   - forgotPasswordProtection: boolean
  */
 module.exports.ensureAuthenticated = (allowedRoles = [], options = {}) => {
     const cfg = {
         require2FA: false,
         sessionTimeoutMinutes: DEFAULTS.maxInactivityMinutes,
         rateLimit: null,
+        forgotPasswordProtection: true,
         ...options,
     };
 
@@ -88,7 +87,6 @@ module.exports.ensureAuthenticated = (allowedRoles = [], options = {}) => {
                 const token = req.headers.authorization.split(' ')[1];
                 try {
                     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'jwt-secret-placeholder');
-                    // decoded باید شامل { id, role, ... } باشه
                     req.user = decoded;
                 } catch (jwtErr) {
                     await Audit.log({
@@ -109,7 +107,7 @@ module.exports.ensureAuthenticated = (allowedRoles = [], options = {}) => {
             // -------------------------
             // 2) بررسی session (وب)
             // -------------------------
-            if (!req.user) { // اگر JWT نبود از session استفاده کن
+            if (!req.user) {
                 if (!req.session || !req.session.user || !req.session.user.id) {
                     await Audit.log({
                         userId: null,
@@ -127,14 +125,12 @@ module.exports.ensureAuthenticated = (allowedRoles = [], options = {}) => {
                 req.user = req.session.user;
             }
 
-            // از اینجا req.user باید ست شده باشه
             const user = req.user;
 
             // -------------------------
-            // 3) rate-limit (اختیاری)
+            // 3) Rate-limit عمومی
             // -------------------------
             if (cfg.rateLimit) {
-                // پایه: محدودیت بر user.id یا بر IP (برای ناشناخته‌ها)
                 const rlKey = user.id ? `uid:${user.id}` : `ip:${req.ip}`;
                 const rlRes = rateLimitCheck(rlKey, cfg.rateLimit);
                 if (!rlRes.allowed) {
@@ -150,12 +146,30 @@ module.exports.ensureAuthenticated = (allowedRoles = [], options = {}) => {
                     }
                     return res.status(429).render('errors/429', { message: 'تعداد درخواست‌ها زیاد است، بعداً تلاش کنید' });
                 }
-                // برای اطلاعات می‌تونی rlRes.remaining را در هدر پاس بدی (اختیاری)
                 res.setHeader && res.setHeader('X-RateLimit-Remaining', String(rlRes.remaining || 0));
             }
 
             // -------------------------
-            // 4) چک کردن timeout سشن (activity)
+            // 4) Rate-limit مسیر forgot/reset password
+            // -------------------------
+            if (cfg.forgotPasswordProtection &&
+                (req.originalUrl.startsWith('/forgot-password') || req.originalUrl.startsWith('/reset/'))) {
+                const fpKey = `fp:${req.ip}`;
+                const fpRes = rateLimitCheck(fpKey, { maxAttempts: DEFAULTS.forgotPasswordMaxAttempts, windowMs: DEFAULTS.forgotPasswordWindowMs });
+                if (!fpRes.allowed) {
+                    await Audit.log({
+                        userId: null,
+                        eventType: 'FORGOT_PASSWORD_RATE_LIMIT',
+                        message: `Forgot/Reset password rate limit exceeded for ${req.ip}`,
+                        ip: req.ip,
+                        url: req.originalUrl,
+                    });
+                    return res.status(429).render('errors/429', { message: 'تعداد تلاش‌های بازیابی رمز زیاد است، بعداً تلاش کنید' });
+                }
+            }
+
+            // -------------------------
+            // 5) چک کردن timeout سشن (activity)
             // -------------------------
             const lastActivity = req.session?.user?.lastActivity ? new Date(req.session.user.lastActivity) : null;
             const sessionTimeoutMin = options.sessionTimeoutMinutes || cfg.sessionTimeoutMinutes;
@@ -169,8 +183,7 @@ module.exports.ensureAuthenticated = (allowedRoles = [], options = {}) => {
                         ip: req.ip,
                         url: req.originalUrl,
                     });
-                    // destroy session
-                    req.session && req.session.destroy && req.session.destroy((err) => { if (err) console.error('destroy session error', err); });
+                    req.session && req.session.destroy && req.session.destroy(err => { if (err) console.error(err); });
                     if (req.xhr || (req.headers.accept && req.headers.accept.includes('json'))) {
                         return res.status(401).json({ error: 'Session expired' });
                     }
@@ -178,11 +191,10 @@ module.exports.ensureAuthenticated = (allowedRoles = [], options = {}) => {
                     return res.redirect('/login');
                 }
             }
-            // update lastActivity (صرف‌نظر از JWT)
             if (req.session && req.session.user) req.session.user.lastActivity = new Date(now);
 
             // -------------------------
-            // 5) بررسی نقش (roles)
+            // 6) بررسی نقش‌ها
             // -------------------------
             if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
                 const role = user.role;
@@ -202,12 +214,11 @@ module.exports.ensureAuthenticated = (allowedRoles = [], options = {}) => {
             }
 
             // -------------------------
-            // 6) بررسی 2FA اگر لازم است
+            // 7) بررسی 2FA
             // -------------------------
             if (cfg.require2FA) {
-                // انتظار داریم user.twoFactorEnabled و user.twoFactorSecret در session یا payload وجود داشته باشه
                 if (!user.twoFactorEnabled || !user.twoFactorSecret) {
-                    req.flash && req.flash('error_msg', 'برای دسترسی به این بخش باید احراز هویت دو مرحله‌ای فعال باشد');
+                    req.flash && req.flash('error_msg', 'برای دسترسی به این بخش باید 2FA فعال باشد');
                     return res.redirect('/2fa/setup');
                 }
                 const token2fa = req.headers['x-2fa-token'] || req.body?.token || req.query?.token;
@@ -219,16 +230,13 @@ module.exports.ensureAuthenticated = (allowedRoles = [], options = {}) => {
                         ip: req.ip,
                         url: req.originalUrl,
                     });
-                    if (req.xhr || (req.headers.accept && req.headers.accept.includes('json'))) {
-                        return res.status(401).json({ error: 'Invalid 2FA token' });
-                    }
-                    req.flash && req.flash('error_msg', 'کد دو مرحله‌ای نامعتبر است');
+                    req.flash && req.flash('error_msg', 'کد 2FA نامعتبر است');
                     return res.redirect('/2fa/verify');
                 }
             }
 
             // -------------------------
-            // 7) شناسایی دستگاه/IP جدید
+            // 8) ثبت دستگاه جدید
             // -------------------------
             if (user.id) {
                 const devKey = makeDeviceKey(req);
@@ -238,7 +246,6 @@ module.exports.ensureAuthenticated = (allowedRoles = [], options = {}) => {
                     trustedDevices.set(user.id, set);
                 }
                 if (!set.has(devKey)) {
-                    // نشون میده اولین بار از این دستگاه/IP است
                     set.add(devKey);
                     await Audit.log({
                         userId: user.id,
@@ -246,19 +253,18 @@ module.exports.ensureAuthenticated = (allowedRoles = [], options = {}) => {
                         message: 'Access from new device/IP',
                         ip: req.ip,
                         url: req.originalUrl,
-                        meta: { deviceKey: devKey }
+                        meta: { deviceKey: devKey },
                     });
-                    // اختیاری: ارسال ایمیل/نوتیف به کاربر دربارهٔ دستگاه جدید
                 }
             }
 
             // -------------------------
-            // 8) ست کردن req.user برای کنترلرها
+            // 9) ست کردن req.user
             // -------------------------
             req.user = user;
 
             // -------------------------
-            // 9) لاگ دسترسی موفق
+            // 10) لاگ موفقیت
             // -------------------------
             await Audit.log({
                 userId: user.id || null,
@@ -268,8 +274,8 @@ module.exports.ensureAuthenticated = (allowedRoles = [], options = {}) => {
                 url: req.originalUrl,
             });
 
-            // همه چی اوکی -> next
             return next();
+
         } catch (err) {
             console.error('Auth Middleware Error:', err);
             await Audit.log({
@@ -283,20 +289,6 @@ module.exports.ensureAuthenticated = (allowedRoles = [], options = {}) => {
                 return res.status(500).json({ error: 'Authentication error' });
             }
             return res.status(500).render('errors/500', { message: 'خطا در سیستم احراز هویت' });
-        }
-    };
-};
-module.exports.ensureAuthenticated = (allowedRoles = []) => {
-    return async (req, res, next) => {
-        try {
-            if (!req.user) {
-                return res.status(401).json({ message: 'Unauthorized' });
-            }
-            // بررسی نقش‌ها اگه لازم بود...
-            next();
-        } catch (err) {
-            console.error('Auth error:', err);
-            res.status(500).json({ message: 'Server error' });
         }
     };
 };

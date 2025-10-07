@@ -29,6 +29,14 @@ const orderController = {
                 totalOrders = await Order.countByUser(req.session.user.id, status, search);
             }
 
+            // 🟡 محاسبه progressWidth برای هر سفارش
+            orders = orders.map(order => {
+                let progressWidth = '0%';
+                if (order.status === 'pending') progressWidth = '50%';
+                else if (order.status === 'completed') progressWidth = '100%';
+                return { ...order, progressWidth };
+            });
+
             const totalPages = Math.ceil(totalOrders / limit);
 
             res.render('orders', {
@@ -64,7 +72,6 @@ const orderController = {
             req.flash('success_msg', 'Order created successfully');
             await Notification.create(req.session.user.id, `Your order "${order.title}" has been created.`);
 
-            // ارسال رویداد real-time به همه کلاینت‌ها
             const io = req.app.get('io');
             io.emit('newOrder', { orderId: order.id, title: order.title, user: req.session.user.name });
 
@@ -134,7 +141,7 @@ const orderController = {
                 return res.redirect('/orders');
             }
 
-            await Order.archive(req.params.id); // Soft delete
+            await Order.archive(req.params.id);
             req.flash('success_msg', 'Order archived');
             res.redirect('/orders');
         } catch (err) {
@@ -156,14 +163,12 @@ const orderController = {
                 return res.redirect('/orders');
             }
 
-            // حذف فایل‌ها
             const files = await File.findByOrder(order.id);
             for (const f of files) {
                 if (fs.existsSync(f.filepath)) fs.unlinkSync(f.filepath);
                 await File.delete(f.id);
             }
 
-            // حذف پیام‌ها
             const messages = await Message.findByOrder(order.id);
             for (const m of messages) {
                 await Message.delete(m.id);
@@ -195,7 +200,6 @@ const orderController = {
 
             await Notification.create(req.session.user.id, `Payment successful for order #${req.params.id}`);
 
-            // ارسال رویداد real-time
             const io = req.app.get('io');
             io.emit('orderPaid', { orderId: req.params.id });
 
@@ -222,7 +226,7 @@ const orderController = {
     },
 
     // ================================
-    // 📌 گزارش مدیر (با گزارش مالی)
+    // 📌 گزارش مدیر
     getAdminReports: async (req, res) => {
         try {
             if (req.session.user.role !== 'admin') {
@@ -235,7 +239,6 @@ const orderController = {
             const unpaidOrders = orders.filter(o => !o.paid);
 
             const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.amount || 0), 0);
-
             const users = await User.findAll();
 
             res.render('adminReports', {
@@ -257,7 +260,43 @@ const orderController = {
     },
 
     // ================================
-    // 📌 API JSON برای SPA یا frontend مدرن
+    // 📌 نمایش جزئیات سفارش + progressWidth
+    getOrderDetail: async (req, res) => {
+        try {
+            if (!req.session.user) return res.redirect('/login');
+
+            const orderId = req.params.id;
+            const order = await Order.findById(orderId);
+
+            if (!order || (req.session.user.role !== 'admin' && order.user_id !== req.session.user.id)) {
+                req.flash('error_msg', 'Unauthorized');
+                return res.redirect('/orders');
+            }
+
+            let progressWidth = '0%';
+            if (order.status === 'pending') progressWidth = '50%';
+            else if (order.status === 'completed') progressWidth = '100%';
+
+            const attachments = await File.findByOrder(orderId);
+            const history = await Order.getHistory ? await Order.getHistory(orderId) : [];
+            const reviews = await Order.getReviews ? await Order.getReviews(orderId) : [];
+
+            res.render('orderDetail', {
+                order,
+                attachments,
+                history,
+                reviews,
+                progressWidth
+            });
+        } catch (err) {
+            console.error(err);
+            req.flash('error_msg', 'Error loading order detail');
+            res.redirect('/orders');
+        }
+    },
+
+    // ================================
+    // 📌 API JSON
     apiGetOrders: async (req, res) => {
         try {
             let orders;

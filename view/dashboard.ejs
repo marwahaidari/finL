@@ -4,35 +4,82 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>داشبورد مدیریت | سامانه دولتی</title>
+    <title>داشبورد مدیریت | سامانه</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazir&display=swap" rel="stylesheet">
     <style>
-        /* Count-Up افکت */
-        .count-up {
-            transition: all 0.6s ease-in-out;
+        body {
+            font-family: 'Vazir', sans-serif;
         }
 
-        /* Hover row effect */
+        .count-up {
+            transition: all 0.6s ease-in-out;
+            display: inline-block;
+        }
+
+        .card {
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.5s ease-out;
+        }
+
+        .card.visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
         table tbody tr:hover {
             background-color: #f1f5f9;
-            transform: scale(1.01);
-            transition: all 0.2s;
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .badge-pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        /* Scrollbar زیباسازی */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(100, 116, 139, 0.5);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
         }
     </style>
 </head>
 
 <body class="bg-gray-50 text-gray-800 font-sans">
 
-    <!-- نوار بالا -->
+    <!-- Header -->
     <header class="bg-blue-900 text-white shadow p-4 flex items-center justify-between sticky top-0 z-50">
         <h1 class="text-2xl font-bold flex items-center gap-2">
-            <i data-lucide="layout-dashboard"></i>
-            داشبورد مدیریت
+            <i data-lucide="layout-dashboard"></i> داشبورد مدیریت
         </h1>
         <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-1">
-            <i data-lucide="log-out"></i>
-            خروج
+            <i data-lucide="log-out"></i> خروج
         </a>
     </header>
 
@@ -40,22 +87,26 @@
 
         <!-- آمار کلی -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="bg-blue-600 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center">
+            <div
+                class="bg-blue-600 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center card">
                 <i data-lucide="shopping-cart" class="mb-2"></i>
                 <p>کل سفارش‌ها</p>
                 <p class="text-3xl font-bold count-up" data-target="<%= stats.total_orders %>">0</p>
             </div>
-            <div class="bg-green-600 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center">
+            <div
+                class="bg-green-600 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center card">
                 <i data-lucide="check-circle" class="mb-2"></i>
                 <p>سفارش‌های پرداخت‌شده</p>
                 <p class="text-3xl font-bold count-up" data-target="<%= stats.paid_orders %>">0</p>
             </div>
-            <div class="bg-yellow-500 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center">
+            <div
+                class="bg-yellow-500 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center card">
                 <i data-lucide="clock" class="mb-2"></i>
                 <p>در حال انجام</p>
                 <p class="text-3xl font-bold count-up" data-target="<%= stats.pending_orders %>">0</p>
             </div>
-            <div class="bg-indigo-600 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center">
+            <div
+                class="bg-indigo-600 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center card">
                 <i data-lucide="check-square" class="mb-2"></i>
                 <p>تکمیل‌شده</p>
                 <p class="text-3xl font-bold count-up" data-target="<%= stats.completed_orders %>">0</p>
@@ -63,7 +114,7 @@
         </section>
 
         <!-- فیلتر و جستجو -->
-        <section class="bg-white p-5 rounded-2xl shadow-lg">
+        <section class="bg-white p-5 rounded-2xl shadow-lg card">
             <form class="grid md:grid-cols-4 gap-4" method="GET" action="/dashboard">
                 <input type="text" name="q" placeholder="جستجو..." value="<%= q || '' %>"
                     class="border p-2 rounded-lg focus:outline-none focus:ring focus:ring-blue-300 w-full" />
@@ -87,10 +138,9 @@
         </section>
 
         <!-- لیست سفارش‌ها -->
-        <section class="bg-white p-5 rounded-2xl shadow-lg overflow-x-auto">
+        <section class="bg-white p-5 rounded-2xl shadow-lg overflow-x-auto card">
             <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                <i data-lucide="clipboard-list"></i>
-                سفارش‌ها
+                <i data-lucide="clipboard-list"></i> سفارش‌ها
             </h2>
             <table class="w-full text-sm text-center border-collapse">
                 <thead class="bg-gray-200">
@@ -106,16 +156,16 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <% orders.forEach(order=> { %>
+                    <% orders.forEach((order,index)=> { %>
                         <tr class="border-b transition-colors duration-200">
                             <td class="p-2">
-                                <%= order.id %>
+                                <%= index+1 %>
                             </td>
                             <td class="p-2 font-semibold">
                                 <%= order.title %>
                             </td>
                             <td class="p-2">
-                                <%= order.user_name %>
+                                <%= order.user_name || order.user?.full_name %>
                             </td>
                             <td class="p-2 font-medium text-sm">
                                 <% if(order.status==='pending' ){ %>
@@ -127,7 +177,11 @@
                                             <% } %>
                             </td>
                             <td class="p-2 capitalize">
-                                <%= order.priority %>
+                                <span class="<%= order.priority==='high'?'badge-pulse bg-red-500 text-white px-2 py-1 rounded-full font-semibold':
+                                            order.priority==='normal'?'bg-yellow-400 text-white px-2 py-1 rounded-full font-semibold':
+                                            'bg-green-500 text-white px-2 py-1 rounded-full font-semibold' %>">
+                                    <%= order.priority %>
+                                </span>
                             </td>
                             <td class="p-2 font-bold">
                                 <% if(order.paid){ %>
@@ -162,10 +216,9 @@
         </section>
 
         <!-- آخرین سفارش‌ها -->
-        <section class="bg-white p-5 rounded-2xl shadow-lg">
+        <section class="bg-white p-5 rounded-2xl shadow-lg card">
             <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                <i data-lucide="clock"></i>
-                آخرین سفارش‌ها
+                <i data-lucide="clock"></i> آخرین سفارش‌ها
             </h2>
             <ul class="space-y-2">
                 <% recentOrders.forEach(o=> { %>
@@ -183,42 +236,39 @@
         </section>
 
         <!-- کاربران -->
-        <% if (users && users.length>0) { %>
-            <section class="bg-white p-5 rounded-2xl shadow-lg">
+        <% if(users && users.length>0){ %>
+            <section class="bg-white p-5 rounded-2xl shadow-lg overflow-x-auto card">
                 <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <i data-lucide="users"></i>
-                    کاربران
+                    <i data-lucide="users"></i> کاربران
                 </h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-center border-collapse">
-                        <thead class="bg-gray-200">
-                            <tr>
-                                <th class="p-2">#</th>
-                                <th class="p-2">نام</th>
-                                <th class="p-2">ایمیل</th>
-                                <th class="p-2">نقش</th>
+                <table class="w-full text-sm text-center border-collapse">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="p-2">#</th>
+                            <th class="p-2">نام</th>
+                            <th class="p-2">ایمیل</th>
+                            <th class="p-2">نقش</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% users.forEach((u,index)=> { %>
+                            <tr class="border-b transition-colors duration-200">
+                                <td class="p-2">
+                                    <%= index+1 %>
+                                </td>
+                                <td class="p-2">
+                                    <%= u.name %>
+                                </td>
+                                <td class="p-2">
+                                    <%= u.email %>
+                                </td>
+                                <td class="p-2 capitalize font-medium">
+                                    <%= u.role %>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            <% users.forEach(u=> { %>
-                                <tr class="border-b transition-colors duration-200">
-                                    <td class="p-2">
-                                        <%= u.id %>
-                                    </td>
-                                    <td class="p-2">
-                                        <%= u.name %>
-                                    </td>
-                                    <td class="p-2">
-                                        <%= u.email %>
-                                    </td>
-                                    <td class="p-2 capitalize font-medium">
-                                        <%= u.role %>
-                                    </td>
-                                </tr>
-                                <% }) %>
-                        </tbody>
-                    </table>
-                </div>
+                            <% }) %>
+                    </tbody>
+                </table>
             </section>
             <% } %>
 
@@ -227,22 +277,44 @@
     <script>
         lucide.createIcons();
 
-        // Count-Up Animation
         const counters = document.querySelectorAll('.count-up');
         counters.forEach(counter => {
             const target = +counter.dataset.target;
             let count = 0;
             const step = Math.ceil(target / 100);
-            const interval = setInterval(() => {
-                count += step;
-                if (count >= target) {
-                    counter.textContent = target;
-                    clearInterval(interval);
-                } else {
-                    counter.textContent = count;
-                }
-            }, 15);
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const interval = setInterval(() => {
+                            count += step;
+                            if (count >= target) {
+                                counter.textContent = target;
+                                counter.style.transform = 'scale(1)';
+                                counter.style.opacity = 1;
+                                clearInterval(interval);
+                            } else {
+                                counter.textContent = count;
+                                counter.style.transform = `scale(${1 + 0.5 * (count / target)})`;
+                                counter.style.opacity = `${count / target}`;
+                            }
+                        }, 15);
+                        observer.unobserve(counter);
+                    }
+                });
+            }, { threshold: 0.5 });
+            observer.observe(counter);
         });
+
+        const cards = document.querySelectorAll('.card');
+        const cardObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    cardObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.3 });
+        cards.forEach(card => cardObserver.observe(card));
     </script>
 
 </body>

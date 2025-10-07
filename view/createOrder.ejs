@@ -1,18 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="fa" dir="rtl">
 
 <head>
-    <title>Create Order</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ایجاد سفارش جدید</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: Vazir, sans-serif;
+            background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+        }
+
+        .card {
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+        }
+    </style>
 </head>
 
-<body>
-    <h1>Create New Order</h1>
-    <form action="/orders/create" method="POST">
-        <input type="text" name="title" placeholder="Title" required><br>
-        <textarea name="description" placeholder="Description" required></textarea><br>
-        <button type="submit">Create</button>
-    </form>
-    <a href="/orders">Back to Orders</a>
+<body class="min-h-screen flex items-center justify-center p-6">
+
+    <div class="card p-8 w-full max-w-xl">
+        <h1 class="text-3xl font-bold mb-6 text-center text-gray-800 flex items-center justify-center gap-2">
+            <i data-lucide="plus-circle" class="text-blue-600"></i> ایجاد سفارش جدید
+        </h1>
+
+        <form action="/orders/create" method="POST" enctype="multipart/form-data" class="space-y-6">
+
+            <!-- عنوان سفارش -->
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">عنوان سفارش</label>
+                <input type="text" name="title" placeholder="مثال: طراحی لوگو حرفه‌ای" required
+                    class="w-full border border-gray-300 rounded-xl p-4 text-gray-800 placeholder-gray-400 transition duration-200 hover:border-blue-400 focus:border-blue-500"
+                    value="<%= oldInput ? oldInput.title : '' %>">
+            </div>
+
+            <!-- توضیحات -->
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">توضیحات</label>
+                <textarea name="description" placeholder="جزئیات سفارش خود را وارد کنید..." required
+                    class="w-full border border-gray-300 rounded-xl p-4 h-40 text-gray-800 placeholder-gray-400 transition duration-200 hover:border-blue-400 focus:border-blue-500 resize-none"><%= oldInput ? oldInput.description : '' %></textarea>
+            </div>
+
+            <!-- دپارتمان -->
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">دپارتمان</label>
+                <select name="department" required
+                    class="w-full border border-gray-300 rounded-xl p-4 text-gray-800 transition duration-200 hover:border-blue-400 focus:border-blue-500">
+                    <option value="">-- انتخاب دپارتمان --</option>
+                    <option value="Sales" <%=oldInput && oldInput.department==='Sales' ? 'selected' : '' %>>فروش
+                    </option>
+                    <option value="Support" <%=oldInput && oldInput.department==='Support' ? 'selected' : '' %>>پشتیبانی
+                    </option>
+                    <option value="IT" <%=oldInput && oldInput.department==='IT' ? 'selected' : '' %>>فناوری اطلاعات
+                    </option>
+                    <option value="HR" <%=oldInput && oldInput.department==='HR' ? 'selected' : '' %>>منابع انسانی
+                    </option>
+                </select>
+            </div>
+
+            <!-- اولویت -->
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">اولویت</label>
+                <select name="priority" required
+                    class="w-full border border-gray-300 rounded-xl p-4 text-gray-800 transition duration-200 hover:border-blue-400 focus:border-blue-500">
+                    <option value="">-- انتخاب اولویت --</option>
+                    <option value="Low" <%=oldInput && oldInput.priority==='Low' ? 'selected' : '' %>>کم</option>
+                    <option value="Medium" <%=oldInput && oldInput.priority==='Medium' ? 'selected' : '' %>>متوسط
+                    </option>
+                    <option value="High" <%=oldInput && oldInput.priority==='High' ? 'selected' : '' %>>زیاد</option>
+                </select>
+            </div>
+
+            <!-- تاریخ تخمینی -->
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">تاریخ تخمینی</label>
+                <input type="date" name="eta"
+                    class="w-full border border-gray-300 rounded-xl p-4 text-gray-800 transition duration-200 hover:border-blue-400 focus:border-blue-500"
+                    value="<%= oldInput ? oldInput.eta : '' %>">
+            </div>
+
+            <!-- ضمیمه‌ها -->
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">ضمیمه‌ها</label>
+                <input type="file" name="attachments" multiple
+                    class="w-full border border-gray-300 rounded-xl p-4 text-gray-800 transition duration-200 hover:border-blue-400 focus:border-blue-500">
+            </div>
+
+            <!-- دکمه ارسال -->
+            <button type="submit"
+                class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-2xl font-bold hover:from-blue-700 hover:to-indigo-700 transition flex items-center justify-center gap-3">
+                <i data-lucide="check-circle" class="text-white"></i> ثبت سفارش
+            </button>
+        </form>
+
+        <!-- لینک بازگشت -->
+        <div class="text-center mt-6">
+            <a href="/orders"
+                class="inline-flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-800 transition">
+                <i data-lucide="arrow-left"></i> بازگشت به لیست سفارشات
+            </a>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+
 </body>
 
 </html>

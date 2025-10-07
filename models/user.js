@@ -299,6 +299,31 @@ class User {
     );
     return result.rows;
   }
+
+  // ===============================
+  // پیدا کردن کاربر بر اساس reset_token
+  // ===============================
+  static async findByResetToken(token) {
+    const result = await pool.query(
+      `SELECT * FROM users 
+     WHERE reset_token = $1 AND reset_token_expires > NOW() 
+     LIMIT 1`,
+      [token]
+    );
+    return result.rows[0] || null;
+  }
+
+  // ===============================
+  // پاک کردن reset_token بعد از استفاده
+  // ===============================
+  static async clearResetToken(id) {
+    await pool.query(
+      `UPDATE users 
+     SET reset_token = NULL, reset_token_expires = NULL, updated_at = NOW()
+     WHERE id = $1`,
+      [id]
+    );
+  }
 }
 
 module.exports = User;
