@@ -1,0 +1,10 @@
+// middlewares/authRedirect.js
+const redirectIfAuthenticated = (req, res, next) => {
+  if (req.session.user) {
+    // User is already logged in, redirect to dashboard
+    return res.redirect('/dashboard');
+  }
+  next();
+};
+
+module.exports = { redirectIfAuthenticated };

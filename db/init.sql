@@ -1,23 +1,116 @@
 -- =====================================
--- DATABASE SCHEMA FOR E-GOVERNMENT PORTAL
+-- FIXED DATABASE SCHEMA FOR POSTGRESQL
 -- =====================================
 
 -- ============================
--- Users
+-- Users Table (Fixed for PostgreSQL)
 -- ============================
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    role VARCHAR(20) DEFAULT 'user',
-    phone VARCHAR(20),
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(20) DEFAULT 'citizen' CHECK (role IN ('citizen', 'employee', 'admin')),
+    national_id VARCHAR(50) UNIQUE NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    avatar VARCHAR(500),
+    
+    -- Email verification
+    verification_token VARCHAR(255),
+    is_verified BOOLEAN DEFAULT FALSE,
+    
+    -- Phone verification
+    sms_verification_token VARCHAR(10),
+    sms_token_expires TIMESTAMP,
+    phone_verified BOOLEAN DEFAULT FALSE,
+    
+    -- Password reset
+    reset_token VARCHAR(255),
+    reset_token_expires TIMESTAMP,
+    
+    -- 2FA
+    two_factor_secret VARCHAR(255),
+    two_factor_enabled BOOLEAN DEFAULT FALSE,
+    
+    -- Account status
     is_active BOOLEAN DEFAULT TRUE,
+    notifications_enabled BOOLEAN DEFAULT TRUE,
+    
+    -- Security
     last_login TIMESTAMP,
+    last_login_ip VARCHAR(45),
+    user_agent TEXT,
+    
+    -- Timestamps
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ============================
+-- Sessions table
+-- ============================
+CREATE TABLE sessions (
+    session_id VARCHAR(128) PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    expires INTEGER,
+    data TEXT,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================
+-- Login attempts table
+-- ============================
+CREATE TABLE login_attempts (
+    id SERIAL PRIMARY KEY,
+    identifier VARCHAR(255) NOT NULL,
+    ip_address VARCHAR(45) NOT NULL,
+    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    successful BOOLEAN DEFAULT FALSE
+);
+
+-- ============================
+-- Orders Table
+-- ============================
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    priority VARCHAR(20) DEFAULT 'normal',
+    status VARCHAR(50) DEFAULT 'pending',
+    attachments JSONB DEFAULT '[]',
+    paid BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================
+-- Indexes for better performance
+-- ============================
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_national_id ON users(national_id);
+CREATE INDEX idx_users_phone ON users(phone);
+CREATE INDEX idx_users_verification_token ON users(verification_token);
+CREATE INDEX idx_users_reset_token ON users(reset_token);
+CREATE INDEX idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX idx_sessions_expires ON sessions(expires);
+CREATE INDEX idx_login_attempts_identifier ON login_attempts(identifier);
+CREATE INDEX idx_login_attempts_ip_address ON login_attempts(ip_address);
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+-- Login attempts table for security
+CREATE TABLE login_attempts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    identifier VARCHAR(255) NOT NULL,
+    ip_address VARCHAR(45) NOT NULL,
+    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    successful BOOLEAN DEFAULT FALSE,
+    
+    INDEX idx_identifier (identifier),
+    INDEX idx_ip_address (ip_address),
+    INDEX idx_attempted_at (attempted_at)
+);
 -- ============================
 -- Orders
 -- ============================
@@ -120,19 +213,3 @@ CREATE TABLE reactions (
     reaction VARCHAR(50) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- ============================
--- Indexes for faster queries
--- ============================
-CREATE INDEX idx_orders_user_id ON orders(user_id);
-CREATE INDEX idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX idx_reviews_order_id ON reviews(order_id);
-CREATE INDEX idx_reviews_user_id ON reviews(user_id);
-CREATE INDEX idx_messages_order_id ON messages(order_id);
-CREATE INDEX idx_messages_sender_id ON messages(sender_id);
-CREATE INDEX idx_messages_receiver_id ON messages(receiver_id);
-CREATE INDEX idx_files_order_id ON files(order_id);
-CREATE INDEX idx_files_user_id ON files(user_id);
-CREATE INDEX idx_settings_key ON settings(key);
-CREATE INDEX idx_reactions_setting_id ON reactions(setting_id);
-CREATE INDEX idx_reactions_user_id ON reactions(user_id);
