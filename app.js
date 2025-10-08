@@ -85,6 +85,12 @@ app.set('views', path.join(__dirname, 'view')); // change 'view' -> 'views' if y
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
 
+// simple request logger — temporary for debugging
+app.use((req, res, next) => {
+    console.log('>>> HTTP', req.method, req.originalUrl, 'body=', req.body, 'cookies=', req.headers.cookie || '');
+    next();
+});
+
 // ===========================
 // Static files
 // ===========================
@@ -172,6 +178,14 @@ async function initBackup() {
     }
 }
 initBackup();
+
+// dev error handler
+app.use((err, req, res, next) => {
+    console.error('💥 Unhandled error:', err);
+    if (!res.headersSent) {
+        res.status(500).send('Internal Server Error');
+    }
+});
 
 // ===========================
 // Start server
