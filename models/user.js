@@ -1,12 +1,9 @@
-// models/User.js
 const pool = require('../db');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
 class User {
-  // ===============================
-  // ایجاد کاربر جدید
-  // ===============================
+
   static async create(userData) {
     const {
       name, email, password, role = 'citizen', national_id, phone,

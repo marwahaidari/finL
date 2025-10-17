@@ -1,8 +1,7 @@
-// routes/auth.js
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
-const path = require('path'); // ✅ Added
+const path = require('path');
 const authController = require('../controllers/authController');
 const { ensureAuthenticated } = require('../middlewares/authMiddleware');
 const { redirectIfAuthenticated } = require('../middlewares/authRedirect');
