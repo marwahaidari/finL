@@ -1,8 +1,7 @@
-// controllers/requestController.js
 const Request = require('../models/Request');
 const Document = require('../models/Document');
 const User = require('../models/user'); // فرض می‌کنیم موجوده
-const Notification = require('../models/Notification'); // اگر داری
+const Notification = require('../models/Notification'); 
 const path = require('path');
 const fs = require('fs');
 

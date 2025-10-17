@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const FileType = require('file-type'); // اضافه شده
-const File = require('../models/file');
+const File = require('../models/File');
 
 const ALLOWED_MIME_TYPES = [
     'image/png', 'image/jpg', 'image/jpeg',
