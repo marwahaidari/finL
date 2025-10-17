@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Models
-const User = require('../models/User');
+const User = require('../models/user');
 const Order = require('../models/Order');
 const Review = require('../models/Review');
 const Message = require('../models/Message');

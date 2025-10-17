@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const Order = require('../models/Order');
 const Notification = require('../models/Notification');
-const User = require('../models/User');
+const User = require('../models/user');
 const File = require('../models/File');
 const Message = require('../models/Message');
 
