@@ -25,19 +25,22 @@ const Backup = require('../utils/Backup');
 const AI = require('../utils/AI');
 const Audit = require('../utils/Audit');
 
+// mount orders router (moved out of this file)
+const ordersRouter = require('./orderRoutes');
+
 // ===============================
 // Helpers
 // ===============================
 function handleValidationErrors(req, res, redirectUrl) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        req.flash('error', errors.array().map(e => e.msg).join(', '));
+        if (req.flash) req.flash('error', errors.array().map(e => e.msg).join(', '));
         return res.redirect(redirectUrl);
     }
 }
 
 function ensureAuth(req, res, next) {
-    if (!req.session.user) return res.redirect('/login');
+    if (!req.session || !req.session.user) return res.redirect('/login');
     next();
 }
 
@@ -46,28 +49,121 @@ function ensureAuth(req, res, next) {
 // ===============================
 router.get('/', async (req, res) => {
     try {
-        const totalUsers = await User.count();
-        const totalOrders = await Order.count();
+        const totalUsers = typeof User.count === 'function' ? await User.count() : 0;
+        const totalOrders = typeof Order.count === 'function' ? await Order.count() : 0;
         const totalRequests = typeof Order.countRequests === 'function' ? await Order.countRequests() : 0;
         const stats = { totalUsers, totalOrders, totalRequests };
-        res.render('index', { title: 'پرتال دولت الکترونیک', user: req.session.user || null, stats });
+        res.render('index', { title: 'پرتال دولت الکترونیک', user: req.session ? req.session.user : null, stats });
     } catch (err) {
         console.error('❌ Error fetching stats:', err);
-        res.render('index', { title: 'پرتال دولت الکترونیک', user: req.session.user || null, stats: { totalUsers: 0, totalOrders: 0, totalRequests: 0 } });
+        res.render('index', { title: 'پرتال دولت الکترونیک', user: req.session ? req.session.user : null, stats: { totalUsers: 0, totalOrders: 0, totalRequests: 0 } });
     }
 });
 
-router.get('/dashboard', ensureAuth, (req, res) => {
-    res.render('dashboard', { title: 'داشبورد', user: req.session.user });
+// داشبورد مدیریت
+router.get('/dashboard', ensureAuth, async (req, res) => {
+    try {
+        const q = req.query.q || '';
+        const status = req.query.status || '';
+        const priority = req.query.priority || '';
+
+        // گرفتن داده‌ها به صورت موازی برای سرعت
+        const [
+            rawStats,
+            orders,
+            recentOrders,
+            users
+        ] = await Promise.all([
+            (typeof Order.getReport === 'function') ? Order.getReport() : Promise.resolve({
+                total_orders: 0, paid_orders: 0, pending_orders: 0, completed_orders: 0
+            }),
+            (typeof Order.findAll === 'function') ? Order.findAll({ limit: 50, offset: 0, status: status || null, priority: priority || null }) : Promise.resolve([]),
+            (typeof Order.findRecent === 'function') ? Order.findRecent(5) : Promise.resolve([]),
+            (typeof User.findAll === 'function') ? User.findAll() : Promise.resolve([])
+        ]);
+
+        // اطمینان از اینکه stats عددی هستند
+        const stats = {
+            total_orders: parseInt(rawStats.total_orders || 0, 10),
+            paid_orders: parseInt(rawStats.paid_orders || (rawStats.paid_orders_count || 0), 10),
+            pending_orders: parseInt(rawStats.pending_orders || 0, 10),
+            completed_orders: parseInt(rawStats.completed_orders || 0, 10)
+        };
+
+        res.render('dashboard', {
+            title: 'داشبورد مدیریت',
+            user: req.session.user,
+            stats,
+            orders,
+            recentOrders,
+            users,
+            q,
+            status,
+            priority
+        });
+    } catch (err) {
+        console.error('❌ Dashboard error:', err);
+
+        // ارسال مقادیر پیش‌فرض به view تا EJS هنگام render خطا ندهد
+        res.render('dashboard', {
+            title: 'داشبورد مدیریت',
+            user: req.session.user,
+            stats: { total_orders: 0, paid_orders: 0, pending_orders: 0, completed_orders: 0 },
+            orders: [],
+            recentOrders: [],
+            users: [],
+            q: '',
+            status: '',
+            priority: ''
+        });
+    }
 });
 
 // ===============================
 // Authentication & Profile
 // ===============================
 router.get('/profile', ensureAuth, async (req, res) => {
-    const user = await User.findById(req.session.user.id);
-    res.render('profile', { title: 'پروفایل', user });
+    try {
+        const userId = req.session.user.id;
+
+        // 📌 دریافت اطلاعات کاربر
+        const user = await User.findById(userId);
+
+        // 📜 دریافت سوابق فعالیت (سفارش‌ها)
+        const history = await Order.findAll({
+            where: { user_id: userId },
+            order: [['created_at', 'DESC']],
+            limit: 10
+        });
+
+        // ⭐ دریافت بازخوردها / امتیازها
+        const reviews = await Review.findAll({
+            where: { user_id: userId },
+            order: [['created_at', 'DESC']],
+            limit: 5
+        });
+
+        // 🧭 ارسال داده‌ها به EJS
+        res.render('profile', {
+            title: 'پروفایل کاربر',
+            user,
+            history,
+            reviews
+        });
+
+    } catch (err) {
+        console.error('❌ profile load error:', err);
+        req.flash && req.flash('error', 'خطا در بارگذاری پروفایل');
+
+        res.render('profile', {
+            title: 'پروفایل',
+            user: req.session.user,
+            history: [],
+            reviews: []
+        });
+    }
 });
+
 
 router.post('/profile/edit',
     ensureAuth,
@@ -103,94 +199,72 @@ router.get('/logout', ensureAuth, (req, res) => {
 });
 
 // ===============================
-// Orders
+// Mount Orders Router
+//  (تمام routeهای سفارش در routes/orders.js قرار دارند)
 // ===============================
-
-router.get('/orders', ensureAuth, async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const search = req.query.search || '';
-    const { orders, totalPages } = await Order.findByUserPaginated(req.session.user.id, page, search);
-
-    // console.log('Order object:', Order);
-    res.render('orders', { title: 'سفارش‌ها', orders, totalPages, page, search });
-});
-
-router.get('/orders/create', ensureAuth, (req, res) => {
-    res.render('createOrder', { title: 'ایجاد سفارش' });
-});
-
-router.post('/orders/create',
-    ensureAuth,
-    body('title').notEmpty(),
-    body('description').notEmpty(),
-    body('serviceId').isInt(),
-    async (req, res) => {
-        if (handleValidationErrors(req, res, '/orders/create')) return;
-        const { title, description, serviceId } = req.body;
-        await Order.create(req.session.user.id, title, description, serviceId);
-        await Audit.log(req.session.user.id, `Created order ${title}`);
-        res.redirect('/orders');
-    }
-);
-
-router.get('/orders/edit/:id', ensureAuth, async (req, res) => {
-    const order = await Order.findById(req.params.id);
-    if (!order || order.user_id !== req.session.user.id) return res.status(403).send('Unauthorized');
-    res.render('editOrder', { title: 'ویرایش سفارش', order });
-});
-
-router.post('/orders/edit/:id',
-    ensureAuth,
-    body('title').notEmpty(),
-    body('description').notEmpty(),
-    async (req, res) => {
-        if (handleValidationErrors(req, res, `/orders/edit/${req.params.id}`)) return;
-        const { title, description } = req.body;
-        await Order.update(req.params.id, title, description);
-        await Audit.log(req.session.user.id, `Edited order ${req.params.id}`);
-        res.redirect('/orders');
-    }
-);
-
-router.post('/orders/delete/:id', ensureAuth, async (req, res) => {
-    await Order.softDelete(req.params.id);
-    await Audit.log(req.session.user.id, `Deleted order ${req.params.id}`);
-    res.redirect('/orders');
-});
-
-router.post('/orders/pay/:id', ensureAuth, async (req, res) => {
-    await Order.markAsPaid(req.params.id);
-    await Notification.create(req.session.user.id, `Payment successful for order #${req.params.id}`);
-    await Audit.log(req.session.user.id, `Paid for order ${req.params.id}`);
-    res.redirect('/orders');
-});
+router.use('/orders', ordersRouter);
 
 // ===============================
 // Officer
 // ===============================
 router.get('/officer', checkRole('officer'), async (req, res) => {
-    const orders = await Order.findByDepartment(req.session.user.departmentId);
-    res.render('officerDashboard', { title: 'داشبورد کارشناس', orders, user: req.session.user });
+    try {
+        let orders = [];
+        if (typeof Order.findByDepartment === 'function') {
+            orders = await Order.findByDepartment(req.session.user.departmentId);
+        } else {
+            console.warn('Order.findByDepartment not implemented; returning empty list for /officer');
+        }
+        res.render('officerDashboard', { title: 'داشبورد کارشناس', orders, user: req.session.user });
+    } catch (err) {
+        console.error('officer route error:', err);
+        req.flash && req.flash('error', 'Could not load officer dashboard');
+        res.redirect('/dashboard');
+    }
 });
 
 router.post('/officer/orders/:id/approve', checkRole('officer'), async (req, res) => {
-    await Order.updateStatus(req.params.id, 'Approved');
-    await Audit.log(req.session.user.id, `Approved order ${req.params.id}`);
-    res.redirect('/officer');
+    try {
+        if (typeof Order.updateStatus === 'function') {
+            await Order.updateStatus(req.params.id, 'Approved');
+            await Audit.log(req.session.user.id, `Approved order ${req.params.id}`);
+        } else {
+            console.warn('Order.updateStatus not implemented; cannot approve');
+        }
+        res.redirect('/officer');
+    } catch (err) {
+        console.error('approve error:', err);
+        res.redirect('/officer');
+    }
 });
 
 router.post('/officer/orders/:id/reject', checkRole('officer'), async (req, res) => {
-    await Order.updateStatus(req.params.id, 'Rejected');
-    await Audit.log(req.session.user.id, `Rejected order ${req.params.id}`);
-    res.redirect('/officer');
+    try {
+        if (typeof Order.updateStatus === 'function') {
+            await Order.updateStatus(req.params.id, 'Rejected');
+            await Audit.log(req.session.user.id, `Rejected order ${req.params.id}`);
+        } else {
+            console.warn('Order.updateStatus not implemented; cannot reject');
+        }
+        res.redirect('/officer');
+    } catch (err) {
+        console.error('reject error:', err);
+        res.redirect('/officer');
+    }
 });
 
 // ===============================
-// Messages
+// Messages (kept minimal - detailed message routes are in orders router)
 // ===============================
 router.get('/orders/:orderId/messages', ensureAuth, async (req, res) => {
-    const messages = await Message.findByOrder(req.params.orderId);
-    res.render('messages', { title: 'پیام‌ها', messages, orderId: req.params.orderId });
+    try {
+        const messages = (typeof Message.findByOrder === 'function') ? await Message.findByOrder(req.params.orderId) : [];
+        res.render('messages', { title: 'پیام‌ها', messages, orderId: req.params.orderId });
+    } catch (err) {
+        console.error('messages load error:', err);
+        req.flash && req.flash('error', 'Could not load messages');
+        res.redirect('/orders');
+    }
 });
 
 router.post('/orders/:orderId/messages',
@@ -198,74 +272,92 @@ router.post('/orders/:orderId/messages',
     body('content').notEmpty(),
     async (req, res) => {
         if (handleValidationErrors(req, res, `/orders/${req.params.orderId}/messages`)) return;
-        await Message.send(req.session.user.id, req.params.orderId, req.body.content);
-        await Audit.log(req.session.user.id, `Sent message on order ${req.params.orderId}`);
+        if (typeof Message.send === 'function') {
+            await Message.send(req.session.user.id, req.params.orderId, req.body.content);
+            await Audit.log(req.session.user.id, `Sent message on order ${req.params.orderId}`);
+        } else {
+            console.warn('Message.send not implemented');
+        }
         res.redirect(`/orders/${req.params.orderId}/messages`);
     }
 );
-
-router.post('/orders/:orderId/messages/:messageId/reply',
-    ensureAuth,
-    body('content').notEmpty(),
-    async (req, res) => {
-        if (handleValidationErrors(req, res, `/orders/${req.params.orderId}/messages`)) return;
-        await Message.reply(req.params.messageId, req.session.user.id, req.body.content);
-        await Audit.log(req.session.user.id, `Replied to message ${req.params.messageId}`);
-        res.redirect(`/orders/${req.params.orderId}/messages`);
-    }
-);
-
-router.post('/orders/:orderId/messages/:messageId/delete', ensureAuth, async (req, res) => {
-    await Message.delete(req.params.messageId);
-    await Audit.log(req.session.user.id, `Deleted message ${req.params.messageId}`);
-    res.redirect(`/orders/${req.params.orderId}/messages`);
-});
 
 // ===============================
-// Files
+// Files (kept minimal - file routes mostly in orders router)
 // ===============================
 router.get('/orders/:orderId/files', ensureAuth, async (req, res) => {
-    const files = await File.findByOrder(req.params.orderId);
-    res.render('files', { title: 'فایل‌ها', files, orderId: req.params.orderId });
+    try {
+        const files = (typeof File.findByOrder === 'function') ? await File.findByOrder(req.params.orderId) : [];
+        res.render('files', { title: 'فایل‌ها', files, orderId: req.params.orderId });
+    } catch (err) {
+        console.error('files load error:', err);
+        req.flash && req.flash('error', 'Could not load files');
+        res.redirect('/orders');
+    }
 });
 
 router.get('/orders/:orderId/files/:fileId/download', ensureAuth, async (req, res) => {
-    const file = await File.findById(req.params.fileId);
-    if (!file || !fs.existsSync(path.resolve(file.filepath))) return res.status(404).send('File not found');
-    res.download(path.resolve(file.filepath), file.filename);
+    try {
+        if (typeof File.findById !== 'function') return res.status(404).send('File not found');
+        const file = await File.findById(req.params.fileId);
+        if (!file || !fs.existsSync(path.resolve(file.filepath))) return res.status(404).send('File not found');
+        res.download(path.resolve(file.filepath), file.filename);
+    } catch (err) {
+        console.error('file download error:', err);
+        res.status(500).send('Error downloading file');
+    }
 });
 
 router.post('/orders/:orderId/files/:fileId/delete', ensureAuth, async (req, res) => {
-    const file = await File.findById(req.params.fileId);
-    if (!file) return res.status(404).send('File not found');
-    await File.softDelete(req.params.fileId);
-    await Audit.log(req.session.user.id, `Deleted file ${req.params.fileId}`);
-    res.redirect(`/orders/${req.params.orderId}/files`);
+    try {
+        if (typeof File.findById !== 'function') return res.status(404).send('File not found');
+        const file = await File.findById(req.params.fileId);
+        if (!file) return res.status(404).send('File not found');
+        if (typeof File.softDelete === 'function') {
+            await File.softDelete(req.params.fileId);
+            await Audit.log(req.session.user.id, `Deleted file ${req.params.fileId}`);
+        }
+        res.redirect(`/orders/${req.params.orderId}/files`);
+    } catch (err) {
+        console.error('file delete error:', err);
+        res.redirect(`/orders/${req.params.orderId}/files`);
+    }
 });
 
 // ===============================
 // Notifications
 // ===============================
 router.get('/notifications', ensureAuth, async (req, res) => {
-    const notifications = await Notification.findByUser(req.session.user.id);
-    res.render('notifications', { title: 'اطلاعیه‌ها', notifications });
+    try {
+        const notifications = (typeof Notification.findByUser === 'function') ? await Notification.findByUser(req.session.user.id) : [];
+        res.render('notifications', { title: 'اطلاعیه‌ها', notifications });
+    } catch (err) {
+        console.error('notifications load error:', err);
+        res.render('notifications', { title: 'اطلاعیه‌ها', notifications: [] });
+    }
 });
 
 router.post('/notifications/:id/read', ensureAuth, async (req, res) => {
-    await Notification.markAsRead(req.params.id, req.session.user.id);
-    await Audit.log(req.session.user.id, `Marked notification ${req.params.id} as read`);
+    if (typeof Notification.markAsRead === 'function') {
+        await Notification.markAsRead(req.params.id, req.session.user.id);
+        await Audit.log(req.session.user.id, `Marked notification ${req.params.id} as read`);
+    }
     res.redirect('/notifications');
 });
 
 router.post('/notifications/:id/delete', ensureAuth, async (req, res) => {
-    await Notification.delete(req.params.id, req.session.user.id);
-    await Audit.log(req.session.user.id, `Deleted notification ${req.params.id}`);
+    if (typeof Notification.delete === 'function') {
+        await Notification.delete(req.params.id, req.session.user.id);
+        await Audit.log(req.session.user.id, `Deleted notification ${req.params.id}`);
+    }
     res.redirect('/notifications');
 });
 
 router.post('/notifications/clear', ensureAuth, async (req, res) => {
-    await Notification.deleteAll(req.session.user.id);
-    await Audit.log(req.session.user.id, `Cleared all notifications`);
+    if (typeof Notification.deleteAll === 'function') {
+        await Notification.deleteAll(req.session.user.id);
+        await Audit.log(req.session.user.id, `Cleared all notifications`);
+    }
     res.redirect('/notifications');
 });
 
@@ -273,13 +365,20 @@ router.post('/notifications/clear', ensureAuth, async (req, res) => {
 // Reviews
 // ===============================
 router.get('/reviews', ensureAuth, async (req, res) => {
-    const reviews = await Review.findAll();
-    res.render('reviews', { title: 'نظرات', reviews });
+    try {
+        const reviews = (typeof Review.findAll === 'function') ? await Review.findAll() : [];
+        res.render('reviews', { title: 'نظرات', reviews });
+    } catch (err) {
+        console.error('reviews load error:', err);
+        res.render('reviews', { title: 'نظرات', reviews: [] });
+    }
 });
 
 router.post('/reviews/delete/:id', ensureAuth, async (req, res) => {
-    await Review.delete(req.params.id);
-    await Audit.log(req.session.user.id, `Deleted review ${req.params.id}`);
+    if (typeof Review.delete === 'function') {
+        await Review.delete(req.params.id);
+        await Audit.log(req.session.user.id, `Deleted review ${req.params.id}`);
+    }
     res.redirect('/reviews');
 });
 
@@ -292,74 +391,83 @@ router.get('/admin', checkRole('admin'), (req, res) => {
 
 // Users Management
 router.get('/admin/users', checkRole('admin'), async (req, res) => {
-    const users = await User.findAll();
+    const users = (typeof User.findAll === 'function') ? await User.findAll() : [];
     res.render('adminUsers', { title: 'مدیریت کاربران', users });
 });
 
 // Services Management
 router.get('/admin/services', checkRole('admin'), async (req, res) => {
-    const services = await Service.findAll();
+    const services = (typeof Service.findAll === 'function') ? await Service.findAll() : [];
     res.render('adminServices', { title: 'مدیریت خدمات', services });
 });
 
 // Departments Management
 router.get('/admin/departments', checkRole('admin'), async (req, res) => {
-    const departments = await Department.findAll();
+    const departments = (typeof Department.findAll === 'function') ? await Department.findAll() : [];
     res.render('adminDepartments', { title: 'مدیریت دپارتمان‌ها', departments });
 });
 
 // Payments Management
 router.get('/admin/payments', checkRole('admin'), async (req, res) => {
-    const payments = await Payment.findAll();
+    const payments = (typeof Payment.findAll === 'function') ? await Payment.findAll() : [];
     res.render('adminPayments', { title: 'مدیریت پرداخت‌ها', payments });
 });
 
 // Settings Management
 router.get('/admin/settings', checkRole('admin'), async (req, res) => {
-    const settings = await Settings.getAll();
+    const settings = (typeof Settings.getAll === 'function') ? await Settings.getAll() : {};
     res.render('adminSettings', { title: 'تنظیمات سیستم', settings });
 });
 
 // Backup
 router.get('/admin/backup', checkRole('admin'), async (req, res) => {
-    const backups = await Backup.list();
+    const backups = (typeof Backup.list === 'function') ? await Backup.list() : [];
     res.render('adminBackup', { title: 'پشتیبان‌گیری', backups });
 });
 
 // AI
 router.post('/admin/ai/analyze', checkRole('admin'), async (req, res) => {
-    const result = await AI.analyze(req.body);
+    const result = (typeof AI.analyze === 'function') ? await AI.analyze(req.body) : { error: 'AI utility not available' };
     res.json(result);
 });
 
 router.post('/admin/ai/chat', checkRole('admin'), async (req, res) => {
-    const response = await AI.chat(req.body.message);
+    const response = (typeof AI.chat === 'function') ? await AI.chat(req.body.message) : { error: 'AI utility not available' };
     res.json(response);
 });
 
 // Export Data
 router.get('/admin/export/:type', checkRole('admin'), async (req, res) => {
-    let data, fields, filename;
-    switch (req.params.type) {
-        case 'users':
-            data = await User.findAll();
-            fields = ['id', 'name', 'email', 'role'];
-            filename = 'users.csv'; break;
-        case 'orders':
-            data = await Order.findAll();
-            fields = ['id', 'title', 'status', 'user_id'];
-            filename = 'orders.csv'; break;
-        case 'services':
-            data = await Service.findAll();
-            fields = ['id', 'name', 'description'];
-            filename = 'services.csv'; break;
-        default: return res.status(400).send('Invalid export type');
+    try {
+        let data = [];
+        let fields = [];
+        let filename = 'export.csv';
+
+        switch (req.params.type) {
+            case 'users':
+                data = (typeof User.findAll === 'function') ? await User.findAll() : [];
+                fields = ['id', 'name', 'email', 'role'];
+                filename = 'users.csv'; break;
+            case 'orders':
+                data = (typeof Order.findAll === 'function') ? await Order.findAll() : [];
+                fields = ['id', 'title', 'status', 'user_id'];
+                filename = 'orders.csv'; break;
+            case 'services':
+                data = (typeof Service.findAll === 'function') ? await Service.findAll() : [];
+                fields = ['id', 'name', 'description'];
+                filename = 'services.csv'; break;
+            default: return res.status(400).send('Invalid export type');
+        }
+
+        const parser = new Parser({ fields });
+        const csv = parser.parse(data);
+        res.header('Content-Type', 'text/csv');
+        res.attachment(filename);
+        res.send(csv);
+    } catch (err) {
+        console.error('export error:', err);
+        res.status(500).send('Export failed');
     }
-    const parser = new Parser({ fields });
-    const csv = parser.parse(data);
-    res.header('Content-Type', 'text/csv');
-    res.attachment(filename);
-    res.send(csv);
 });
 
 module.exports = router;

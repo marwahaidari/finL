@@ -1,0 +1,18 @@
+[2025-10-12T12:22:15.448Z] | User: 3 | Event: UNAUTHORIZED_ROLE_ACCESS | URL: /officer | IP: ::1 | Unauthorized access to /officer with role employee
+[2025-10-12T12:33:23.415Z] | User: 6 | Event: UNAUTHORIZED_ROLE_ACCESS | URL: /officer | IP: ::1 | Unauthorized access to /officer with role employee
+[2025-10-12T12:33:28.286Z] | User: 6 | Event: UNAUTHORIZED_ROLE_ACCESS | URL: /officer | IP: ::1 | Unauthorized access to /officer with role employee
+[2025-10-12T17:00:46.194Z] | User: 10 | Event: UNAUTHORIZED_ROLE_ACCESS | URL: /officer | IP: ::1 | Unauthorized access to /officer with role employee
+[2025-10-15T07:16:58.467Z] | User: Guest | Event: UNAUTHORIZED_ACCESS | URL: /egov/2fa/setup | IP: ::1 | Unauthorized attempt to /egov/2fa/setup
+[2025-10-15T07:20:05.148Z] | User: 3 | Event: NEW_DEVICE | URL: /egov/2fa/setup | IP: ::1 | Access from new device/IP
+[2025-10-15T07:20:05.301Z] | User: 3 | Event: AUTHORIZED_ACCESS | URL: /egov/2fa/setup | IP: ::1 | User accessed /egov/2fa/setup
+[2025-10-15T07:29:04.957Z] | User: Guest | Event: UNAUTHORIZED_ACCESS | URL: /egov/2fa/setup | IP: ::1 | Unauthorized attempt to /egov/2fa/setup
+[2025-10-15T07:29:30.796Z] | User: 3 | Event: NEW_DEVICE | URL: /egov/2fa/setup | IP: ::1 | Access from new device/IP
+[2025-10-15T07:29:30.806Z] | User: 3 | Event: AUTHORIZED_ACCESS | URL: /egov/2fa/setup | IP: ::1 | User accessed /egov/2fa/setup
+[2025-10-15T07:32:42.028Z] | User: Guest | Event: UNAUTHORIZED_ACCESS | URL: /egov/2fa/setup | IP: ::1 | Unauthorized attempt to /egov/2fa/setup
+[2025-10-15T07:33:23.808Z] | User: 3 | Event: NEW_DEVICE | URL: /egov/2fa/setup | IP: ::1 | Access from new device/IP
+[2025-10-15T07:33:23.955Z] | User: 3 | Event: AUTHORIZED_ACCESS | URL: /egov/2fa/setup | IP: ::1 | User accessed /egov/2fa/setup
+[2025-10-15T07:42:24.091Z] | User: Guest | Event: UNAUTHORIZED_ACCESS | URL: /egov/2fa/setup | IP: ::1 | Unauthorized attempt to /egov/2fa/setup
+[2025-10-15T07:43:02.550Z] | User: 3 | Event: NEW_DEVICE | URL: /egov/2fa/setup | IP: ::1 | Access from new device/IP
+[2025-10-15T07:43:02.693Z] | User: 3 | Event: AUTHORIZED_ACCESS | URL: /egov/2fa/setup | IP: ::1 | User accessed /egov/2fa/setup
+[2025-10-16T16:34:09.424Z] | User: 3 | Event: NEW_DEVICE | URL: /egov/2fa/setup | IP: ::1 | Access from new device/IP
+[2025-10-16T16:34:09.449Z] | User: 3 | Event: AUTHORIZED_ACCESS | URL: /egov/2fa/setup | IP: ::1 | User accessed /egov/2fa/setup

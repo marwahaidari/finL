@@ -1,33 +1,66 @@
-<!DOCTYPE html>
-<html lang="fa">
+<header class="bg-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+            Logo / Project Name
+            <div class="flex-shrink-0">
+                <a href="/" class="text-2xl font-bold text-gray-800">GovPortal</a>
+            </div>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>
-        <%= title %>
-    </title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
+            <!-- Nav Links -->
+            <div class="hidden md:flex space-x-4 items-center">
+                <% if (typeof user !=='undefined' && user) { %>
+                    <a href="/dashboard"
+                        class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                    <a href="/profile"
+                        class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Profile</a>
+                    <a href="/logout"
+                        class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Logout</a>
 
-<body>
-    <header>
-        <nav class="navbar">
-            <a href="/" class="logo">GovPortal</a>
-            <% if (user) { %>
-                <div class="nav-links">
-                    <a href="/dashboard">داشبورد</a>
-                    <a href="/profile">پروفایل</a>
-                    <a href="/logout">خروج</a>
-                </div>
-                <% } else { %>
-                    <div class="nav-links">
-                        <a href="/login">ورود</a>
-                        <a href="/register">ثبت نام</a>
-                    </div>
-                    <% } %>
-        </nav>
-    </header>
-    <main>
-        <%- include('partials/flashMessages') %>
+                    <% if (user.role==='admin' ) { %>
+                        <!-- Admin Dropdown -->
+                        <div class="relative group">
+                            <button
+                                class="flex items-center text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                                Admin Panel
+                                <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            <div class="absolute hidden group-hover:block bg-white shadow-md mt-2 rounded-md py-2 w-48">
+                                <a href="/admin/users" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Users</a>
+                                <a href="/admin/services"
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Services</a>
+                                <a href="/admin/requests"
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Requests</a>
+                                <a href="/admin/payments"
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Payments</a>
+                                <a href="/admin/settings"
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</a>
+                                <a href="/admin/reports"
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Reports</a>
+                            </div>
+                        </div>
+                        <% } %>
+
+                            <% } else { %>
+                                <a href="/login"
+                                    class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Login</a>
+                                <a href="/register"
+                                    class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Register</a>
+                                <% } %>
+            </div>
+
+            <!-- Mobile menu button (optional) -->
+            <div class="md:hidden flex items-center">
+                <button class="text-gray-700 hover:text-gray-900 focus:outline-none">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+
+        </div>
+    </div>
+</header>

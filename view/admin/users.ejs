@@ -1,36 +1,191 @@
-<h1>Manage Users</h1>
-<table border="1" cellpadding="5">
-    <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Role</th>
-        <th>Actions</th>
-    </tr>
-    <% users.forEach(u=> { %>
-        <tr>
-            <td>
-                <%= u.id %>
-            </td>
-            <td>
-                <%= u.name %>
-            </td>
-            <td>
-                <%= u.email %>
-            </td>
-            <td>
-                <form action="/admin/users/role/<%= u.id %>" method="POST">
-                    <select name="role" onchange="this.form.submit()">
-                        <option value="user" <%=u.role==='user' ? 'selected' : '' %>>User</option>
-                        <option value="admin" <%=u.role==='admin' ? 'selected' : '' %>>Admin</option>
-                    </select>
-                </form>
-            </td>
-            <td>
-                <form action="/admin/users/delete/<%= u.id %>" method="POST" onsubmit="return confirm('Delete user?')">
-                    <button type="submit">Delete</button>
-                </form>
-            </td>
-        </tr>
-        <% }) %>
-</table>
+<%- include('../layouts/header') %>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 class="text-3xl font-bold mb-6 text-gray-800">Manage Users</h1>
+
+        <!-- Search & Export -->
+        <div class="flex flex-col sm:flex-row sm:justify-between mb-4 gap-2">
+            <input id="searchInput" type="text" placeholder="Search by name or email"
+                class="px-3 py-2 border rounded w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+
+            <button id="exportBtn" class="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition">
+                Export CSV
+            </button>
+        </div>
+
+        <div class="overflow-x-auto bg-white shadow-md rounded-lg">
+            <table class="min-w-full divide-y divide-gray-200" id="usersTable">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="usersBody">
+                    <% if (users && users.length) { %>
+                        <% users.forEach(u=> { %>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <%= u.id %>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <button class="text-blue-600 hover:underline view-user-btn"
+                                        data-user='<%- JSON.stringify(u) %>'>
+                                        <%= u.name %>
+                                    </button>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <%= u.email %>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <select data-user-id="<%= u.id %>" class="role-select border rounded px-2 py-1">
+                                        <option value="user" <%=u.role==='user' ? 'selected' : '' %>>User</option>
+                                        <option value="admin" <%=u.role==='admin' ? 'selected' : '' %>>Admin</option>
+                                    </select>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <% if (u.last_login && (new Date() - new Date(u.last_login) < 5*60*1000)) { %>
+                                        <span class="text-green-600 font-semibold">Online</span>
+                                        <% } else { %>
+                                            <span class="text-gray-500">Offline</span>
+                                            <% } %>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap flex gap-2">
+                                    <button data-user-id="<%= u.id %>"
+                                        class="delete-btn bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                            <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-gray-500">No users found.</td>
+                                    </tr>
+                                    <% } %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <% if (totalPages && totalPages> 1) { %>
+            <div class="mt-4 flex justify-center space-x-2">
+                <% for(let i=1; i<=totalPages; i++) { %>
+                    <a href="?page=<%= i %>"
+                        class="px-3 py-1 rounded <%= page===i ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' %>">
+                        <%= i %>
+                    </a>
+                    <% } %>
+            </div>
+            <% } %>
+    </div>
+
+    <!-- User Modal -->
+    <div id="userModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-11/12 sm:w-96">
+            <h2 class="text-xl font-bold mb-4" id="modalName"></h2>
+            <p><strong>Email:</strong> <span id="modalEmail"></span></p>
+            <p><strong>Role:</strong> <span id="modalRole"></span></p>
+            <p><strong>Phone:</strong> <span id="modalPhone"></span></p>
+            <p><strong>Created At:</strong> <span id="modalCreated"></span></p>
+            <button id="closeModal"
+                class="mt-4 bg-gray-600 text-white px-3 py-2 rounded hover:bg-gray-700 transition">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Live search
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', () => {
+            const filter = searchInput.value.toLowerCase();
+            document.querySelectorAll('#usersBody tr').forEach(tr => {
+                const text = tr.textContent.toLowerCase();
+                tr.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
+
+        // Role update via AJAX
+        document.querySelectorAll('.role-select').forEach(select => {
+            select.addEventListener('change', async (e) => {
+                const userId = e.target.dataset.userId;
+                const role = e.target.value;
+                try {
+                    const res = await fetch(`/admin/users/role/${userId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role })
+                    });
+                    const data = await res.json();
+                    if (!data.success) alert('Error updating role');
+                } catch { alert('Error updating role'); }
+            });
+        });
+
+        // Delete user via AJAX
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirm('Are you sure you want to delete this user?')) return;
+                const userId = btn.dataset.userId;
+                try {
+                    const res = await fetch(`/admin/users/delete/${userId}`, { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) btn.closest('tr').remove();
+                    else alert('Error deleting user');
+                } catch { alert('Error deleting user'); }
+            });
+        });
+
+        // Modal
+        const modal = document.getElementById('userModal');
+        const modalName = document.getElementById('modalName');
+        const modalEmail = document.getElementById('modalEmail');
+        const modalRole = document.getElementById('modalRole');
+        const modalPhone = document.getElementById('modalPhone');
+        const modalCreated = document.getElementById('modalCreated');
+        document.querySelectorAll('.view-user-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const user = JSON.parse(btn.dataset.user);
+                modalName.textContent = user.name;
+                modalEmail.textContent = user.email;
+                modalRole.textContent = user.role;
+                modalPhone.textContent = user.phone || 'N/A';
+                modalCreated.textContent = new Date(user.created_at).toLocaleString();
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            });
+        });
+        document.getElementById('closeModal').addEventListener('click', () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        });
+
+        // Export CSV
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const rows = [['ID', 'Name', 'Email', 'Role', 'Status']];
+            document.querySelectorAll('#usersBody tr').forEach(tr => {
+                if (tr.style.display === 'none') return;
+                const cols = tr.querySelectorAll('td');
+                rows.push([cols[0].innerText, cols[1].innerText, cols[2].innerText, cols[3].querySelector('select') ? cols[3].querySelector('select').value : '', cols[4].innerText]);
+            });
+            const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "users.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    </script>
+
+    <%- include('../layouts/footer') %>

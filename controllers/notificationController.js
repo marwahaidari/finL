@@ -1,4 +1,3 @@
-// controllers/notificationController.js
 const Notification = require('../models/Notification');
 const { validationResult, body } = require('express-validator');
 
@@ -306,28 +305,44 @@ const notificationController = {
             console.error(err);
             return res.status(500).json({ error: 'خطا در پاکسازی نوتیف‌ها' });
         }
-    }
+    },
+
+    // ================================
+    // 📌 اضافه شده: markAsDelivered و archiveNotification
+    markAsDelivered: async (req, res) => {
+        try {
+            const id = parseInt(req.params.id, 10);
+            const userId = req.session.user?.id;
+            if (!userId) return res.status(401).json({ error: 'کاربر وارد نشده' });
+
+            // عملیات تحویل نوتیفیکیشن واقعی
+            const notification = await Notification.markAsDelivered(id, userId);
+
+            const io = req.app.get('io');
+            if (io) io.emit('notificationDelivered', { id, userId });
+
+            res.json(notification);
+        } catch (err) {
+            console.error('Error in markAsDelivered:', err);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    },
 };
-exports.markAsDelivered = async (req, res) => {
+// ================================
+// 📌 ارسال نوتیفیکیشن به صورت realtime
+notificationController.sendRealtimeNotification = async (req, res) => {
     try {
-        const id = parseInt(req.params.id, 10);
-        // عملیات تحویل نوتیفیکیشن
-        res.json({ success: true });
+        // اینجا می‌تونی منطق واقعی ارسال realtime با Socket.io یا هر چیزی بذاری
+        const { message, userId } = req.body;
+        const io = req.app.get('io');
+        if (io) io.emit('newNotification', { message, userId });
+
+        return res.json({ success: true, message: 'Realtime notification sent' });
     } catch (err) {
-        console.error('Error in markAsDelivered:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Error in sendRealtimeNotification:', err);
+        return res.status(500).json({ error: 'خطا در ارسال نوتیفیکیشن realtime' });
     }
 };
 
-exports.archiveNotification = async (req, res) => {
-    try {
-        const id = parseInt(req.params.id, 10);
-        // عملیات آرشیو
-        res.json({ success: true });
-    } catch (err) {
-        console.error('Error in archiveNotification:', err);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
 
 module.exports = notificationController;

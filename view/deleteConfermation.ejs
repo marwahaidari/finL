@@ -9,22 +9,24 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body {
-            font-family: Vazir, sans-serif;
-            background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+            font-family: 'Vazir', sans-serif;
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            background-attachment: fixed;
+            min-height: 100vh;
         }
 
-        .card {
-            backdrop-filter: blur(10px);
-            background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 1.5rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            animation: fadeIn 0.4s ease-in-out;
+        .glass-card {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            animation: fadeIn 0.5s ease-in-out;
         }
 
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(15px);
             }
 
             to {
@@ -32,43 +34,51 @@
                 transform: translateY(0);
             }
         }
+
+        .btn {
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
+<%- include('layouts/header') %>
 
-<body class="min-h-screen flex items-center justify-center p-6">
+    <body class="flex items-center justify-center p-6">
 
-    <div class="card p-8 w-full max-w-md text-center">
-        <i data-lucide="alert-triangle" class="mx-auto text-red-600 w-16 h-16 mb-4"></i>
-        <h1 class="text-2xl font-bold mb-4 text-gray-800">تأیید حذف سفارش</h1>
+        <div class="glass-card p-8 rounded-3xl text-center w-full max-w-md text-gray-800">
+            <i data-lucide="alert-triangle" class="mx-auto text-red-600 w-16 h-16 mb-5"></i>
+            <h1 class="text-2xl font-extrabold mb-3">تأیید حذف سفارش</h1>
 
-        <p class="text-gray-600 mb-6">
-            آیا از حذف سفارش
-            <strong>#<%= order && order.id ? order.id : '---' %></strong>
-            با عنوان
-            "<strong>
-                <%= order && order.title ? order.title : '---' %>
-            </strong>"
-            اطمینان دارید؟ این عمل غیرقابل بازگشت است.
-        </p>
+            <p class="text-gray-700 mb-6 leading-relaxed">
+                آیا از حذف سفارش
+                <strong>#<%= order && order.id ? order.id : '---' %></strong>
+                با عنوان "<strong>
+                    <%= order && order.title ? order.title : '---' %>
+                </strong>" اطمینان دارید؟
+                <br>این عمل غیرقابل بازگشت است.
+            </p>
 
-        <form action="/orders/delete/<%= order.id %>" method="POST" class="flex flex-col gap-4">
-            <button type="submit"
-                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition">
-                <i data-lucide="trash-2"></i>
-                بله، حذف شود
-            </button>
-            <a href="/orders"
-                class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition">
-                <i data-lucide="x"></i>
-                انصراف
-            </a>
-        </form>
-    </div>
+            <form action="/orders/delete/<%= order.id %>" method="POST" class="flex flex-col gap-4">
+                <button type="submit"
+                    class="btn w-full py-3 rounded-xl bg-gradient-to-r from-red-500 to-rose-600 text-white font-bold shadow-lg flex items-center justify-center gap-2">
+                    <i data-lucide="trash-2"></i>
+                    بله، حذف شود
+                </button>
+                <a href="/orders"
+                    class="btn w-full py-3 rounded-xl bg-white/60 hover:bg-white/80 text-gray-800 font-semibold shadow-md flex items-center justify-center gap-2">
+                    <i data-lucide="x"></i>
+                    انصراف
+                </a>
+            </form>
+        </div>
 
-    <script>
-        lucide.createIcons();
-    </script>
+        <script>
+            lucide.createIcons();
+        </script>
 
-</body>
+    </body>
 
 </html>

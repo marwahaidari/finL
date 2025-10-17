@@ -1,4 +1,3 @@
-// routes/notificationRoutes.js
 const express = require('express');
 const router = express.Router();
 const notificationController = require('../controllers/notificationController');
@@ -18,10 +17,8 @@ function assertHandler(fn, name) {
 }
 
 // CRUD
-assertHandler(notificationController.createNotification, 'createNotification');
+// حذف assertHandler برای آرایه middlewareها
 router.post('/', ensureAuth, notificationController.createNotification);
-
-assertHandler(notificationController.createBulkNotifications, 'createBulkNotifications');
 router.post('/bulk', ensureAuth, notificationController.createBulkNotifications);
 
 assertHandler(notificationController.listNotifications, 'listNotifications');

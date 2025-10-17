@@ -1,36 +1,100 @@
-<h1>Manage Reviews</h1>
-<table border="1" cellpadding="5">
-    <tr>
-        <th>ID</th>
-        <th>User</th>
-        <th>Order</th>
-        <th>Rating</th>
-        <th>Comment</th>
-        <th>Actions</th>
-    </tr>
-    <% reviews.forEach(r=> { %>
-        <tr>
-            <td>
-                <%= r.id %>
-            </td>
-            <td>
-                <%= r.user_name %>
-            </td>
-            <td>
-                <%= r.order_title %>
-            </td>
-            <td>
-                <%= r.rating %>⭐
-            </td>
-            <td>
-                <%= r.comment %>
-            </td>
-            <td>
-                <form action="/admin/reviews/delete/<%= r.id %>" method="POST"
-                    onsubmit="return confirm('Delete review?')">
-                    <button type="submit">Delete</button>
-                </form>
-            </td>
-        </tr>
-        <% }) %>
-</table>
+<%- include('../layouts/header') %>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <h1 class="text-3xl font-bold mb-6 text-gray-800">Manage Reviews</h1>
+
+        <!-- Flash messages -->
+        <% if (typeof success_msg !=='undefined' ) { %>
+            <div class="bg-green-100 text-green-800 px-4 py-2 rounded mb-4">
+                <%= success_msg %>
+            </div>
+            <% } %>
+                <% if (typeof error_msg !=='undefined' ) { %>
+                    <div class="bg-red-100 text-red-800 px-4 py-2 rounded mb-4">
+                        <%= error_msg %>
+                    </div>
+                    <% } %>
+
+                        <div class="overflow-x-auto bg-white shadow-md rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            ID</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            User</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Order</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Rating</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Comment</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <% if (reviews && reviews.length> 0) { %>
+                                        <% reviews.forEach(r=> { %>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <%= r.id %>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <%= r.user_name %>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <%= r.order_title %>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <%= r.rating %>/5
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <%= r.comment %>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex space-x-2">
+                                                        <a href="/admin/review/view/<%= r.id %>"
+                                                            class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition">View</a>
+                                                        <form action="/admin/review/delete/<%= r.id %>" method="POST"
+                                                            onsubmit="return confirm('Are you sure you want to delete this review?');">
+                                                            <button type="submit"
+                                                                class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition">Delete</button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <% }) %>
+                                                <% } else { %>
+                                                    <tr>
+                                                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                                                            No reviews found.
+                                                        </td>
+                                                    </tr>
+                                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination placeholder -->
+                        <% if (typeof page !=='undefined' && typeof totalPages !=='undefined' ) { %>
+                            <div class="mt-4 flex justify-center space-x-2">
+                                <% for (let i=1; i <=totalPages; i++) { %>
+                                    <a href="?page=<%= i %>"
+                                        class="px-3 py-1 rounded <%= page === i ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700' %> hover:bg-blue-500 transition">
+                                        <%= i %>
+                                    </a>
+                                    <% } %>
+                            </div>
+                            <% } %>
+
+    </div>
+
+    <%- include('../layouts/footer') %>

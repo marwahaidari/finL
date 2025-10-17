@@ -24,13 +24,12 @@ function makeDeviceKey(req) {
 // helper: بررسی rate limit ساده
 function rateLimitCheck(key, opts = {}) {
     const now = Date.now();
-    const store = rateLimitStore;
     const cfg = { maxAttempts: DEFAULTS.maxAttempts, windowMs: DEFAULTS.windowMs, lockTimeMs: DEFAULTS.lockTimeMs, ...opts };
+    let rec = rateLimitStore.get(key);
 
-    let rec = store.get(key);
     if (!rec) {
         rec = { count: 1, firstSeen: now, blockedUntil: 0 };
-        store.set(key, rec);
+        rateLimitStore.set(key, rec);
         return { allowed: true, remaining: cfg.maxAttempts - 1 };
     }
 
@@ -42,16 +41,16 @@ function rateLimitCheck(key, opts = {}) {
         rec.count = 1;
         rec.firstSeen = now;
         rec.blockedUntil = 0;
-        store.set(key, rec);
+        rateLimitStore.set(key, rec);
         return { allowed: true, remaining: cfg.maxAttempts - 1 };
     }
 
     rec.count++;
-    store.set(key, rec);
+    rateLimitStore.set(key, rec);
 
     if (rec.count > cfg.maxAttempts) {
         rec.blockedUntil = now + cfg.lockTimeMs;
-        store.set(key, rec);
+        rateLimitStore.set(key, rec);
         return { allowed: false, blockedUntil: rec.blockedUntil };
     }
 

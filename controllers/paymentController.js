@@ -1,9 +1,22 @@
-// controllers/paymentController.js
 const Payment = require('../models/Payment');
 const Notification = require('../models/Notification');
 
 const paymentController = {
+    // ================================
+    // نمایش داشبورد پرداخت (EJS)
+    // ================================
+    getPaymentDashboard: (req, res) => {
+        try {
+            res.render('payments'); // 👈 نام فایل EJS شما
+        } catch (err) {
+            console.error("❌ Error rendering payments page:", err);
+            res.status(500).send("خطا در بارگذاری صفحه پرداخت");
+        }
+    },
+
+    // ================================
     // ایجاد پرداخت جدید
+    // ================================
     createPayment: async (req, res) => {
         try {
             const { userId, amount, method, description } = req.body;
@@ -11,17 +24,15 @@ const paymentController = {
                 return res.status(400).json({ error: "userId، amount و method الزامی هستند" });
             }
 
-            const payment = await Payment.create(userId, {
-                amount,
-                method,
-                description
-            });
+            const payment = await Payment.create(userId, { amount, method, description });
 
-            // ثبت نوتیفیکیشن بعد از پرداخت جدید
             await Notification.create(userId, `پرداخت جدید به مبلغ ${amount} با روش ${method} ثبت شد`, {
                 type: "payment",
                 priority: "normal"
             });
+
+            const io = req.app.get('io');
+            if (io) io.emit('paymentCreated', { payment });
 
             return res.status(201).json(payment);
         } catch (err) {
@@ -30,7 +41,9 @@ const paymentController = {
         }
     },
 
+    // ================================
     // دریافت پرداخت با id
+    // ================================
     getPaymentById: async (req, res) => {
         try {
             const { id } = req.params;
@@ -44,7 +57,9 @@ const paymentController = {
         }
     },
 
+    // ================================
     // دریافت همه پرداخت‌های یک کاربر
+    // ================================
     getUserPayments: async (req, res) => {
         try {
             const { userId } = req.params;
@@ -64,7 +79,9 @@ const paymentController = {
         }
     },
 
+    // ================================
     // آپدیت وضعیت پرداخت
+    // ================================
     updatePaymentStatus: async (req, res) => {
         try {
             const { id } = req.params;
@@ -74,11 +91,13 @@ const paymentController = {
             const updatedPayment = await Payment.updateStatus(id, status, details);
             if (!updatedPayment) return res.status(404).json({ error: "پرداخت پیدا نشد" });
 
-            // ثبت نوتیفیکیشن بعد از تغییر وضعیت پرداخت
             await Notification.create(updatedPayment.userId, `وضعیت پرداخت شما به "${status}" تغییر کرد`, {
                 type: "payment",
                 priority: status === "failed" ? "high" : "normal"
             });
+
+            const io = req.app.get('io');
+            if (io) io.emit('paymentStatusUpdated', { payment: updatedPayment });
 
             return res.json(updatedPayment);
         } catch (err) {
@@ -87,7 +106,9 @@ const paymentController = {
         }
     },
 
+    // ================================
     // شمارش پرداخت‌های کاربر
+    // ================================
     countUserPayments: async (req, res) => {
         try {
             const { userId } = req.params;
@@ -101,7 +122,9 @@ const paymentController = {
         }
     },
 
+    // ================================
     // دریافت تاریخچه تغییرات پرداخت
+    // ================================
     getPaymentHistory: async (req, res) => {
         try {
             const { id } = req.params;
@@ -113,18 +136,22 @@ const paymentController = {
         }
     },
 
+    // ================================
     // حذف نرم (غیرفعال کردن پرداخت)
+    // ================================
     softDeletePayment: async (req, res) => {
         try {
             const { id } = req.params;
             const deleted = await Payment.softDelete(id);
             if (!deleted) return res.status(404).json({ error: "پرداخت پیدا نشد" });
 
-            // نوتیفیکیشن حذف نرم
             await Notification.create(deleted.userId, "پرداخت شما غیر فعال شد", {
                 type: "payment",
                 priority: "low"
             });
+
+            const io = req.app.get('io');
+            if (io) io.emit('paymentSoftDeleted', { payment: deleted });
 
             return res.json({ message: "پرداخت غیر فعال شد", deleted });
         } catch (err) {
@@ -133,13 +160,14 @@ const paymentController = {
         }
     },
 
-    // حذف کامل
+    // ================================
+    // حذف کامل پرداخت
+    // ================================
     deletePayment: async (req, res) => {
         try {
             const { id } = req.params;
             const deleted = await Payment.delete(id);
 
-            // نوتیفیکیشن حذف کامل
             if (deleted && deleted.userId) {
                 await Notification.create(deleted.userId, "پرداخت شما به طور کامل حذف شد", {
                     type: "payment",
@@ -147,10 +175,37 @@ const paymentController = {
                 });
             }
 
+            const io = req.app.get('io');
+            if (io) io.emit('paymentDeleted', { paymentId: id });
+
             return res.json({ message: "پرداخت حذف شد" });
         } catch (err) {
             console.error("❌ Error deleting payment:", err);
             return res.status(500).json({ error: "خطا در حذف پرداخت" });
+        }
+    },
+
+    // ================================
+    // علامت‌گذاری پرداخت به عنوان پرداخت‌شده
+    // ================================
+    markAsPaid: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const payment = await Payment.markAsPaid(id);
+            if (!payment) return res.status(404).json({ error: "پرداخت پیدا نشد" });
+
+            await Notification.create(payment.userId, "پرداخت شما پرداخت شد ✅", {
+                type: "payment",
+                priority: "normal"
+            });
+
+            const io = req.app.get('io');
+            if (io) io.emit('paymentMarkedAsPaid', { payment });
+
+            return res.json(payment);
+        } catch (err) {
+            console.error("❌ Error marking payment as paid:", err);
+            return res.status(500).json({ error: "خطا در بروزرسانی پرداخت" });
         }
     }
 };

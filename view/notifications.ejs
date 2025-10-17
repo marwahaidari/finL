@@ -5,140 +5,138 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>اعلان‌ها | سامانه دولتی</title>
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
 
         body {
-            font-family: Tahoma, sans-serif;
-            background: #f5f5f7;
-            direction: rtl;
-            color: #1f2937;
+            font-family: 'Montserrat', sans-serif;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 6rem;
+            position: relative;
+            color: #f1f5f9;
+        }
+
+        /* Floating circles */
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(250, 204, 21, 0.15);
+            animation: float 12s infinite;
+            z-index: 0;
+        }
+
+        .circle:nth-child(1) {
+            width: 120px;
+            height: 120px;
+            top: 10%;
+            left: 10%;
+            animation-duration: 12s;
+        }
+
+        .circle:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            bottom: 15%;
+            right: 15%;
+            animation-duration: 18s;
+        }
+
+        .circle:nth-child(3) {
+            width: 80px;
+            height: 80px;
+            bottom: 10%;
+            left: 20%;
+            animation-duration: 15s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) translateX(0);
+            }
+
+            50% {
+                transform: translateY(-40px) translateX(20px);
+            }
+
+            100% {
+                transform: translateY(0) translateX(0);
+            }
+        }
+
+        .card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 2rem;
+            padding: 2rem;
+            max-width: 800px;
+            width: 90%;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            margin: 0 auto;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-15px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         header {
-            background: #1e3a8a;
-            color: #fff;
-            padding: 24px;
             text-align: center;
-            font-size: 28px;
+            font-size: 2rem;
             font-weight: bold;
+            margin-bottom: 1.5rem;
             position: relative;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
 
         #notificationBadge {
             position: absolute;
-            top: 18px;
-            left: 30px;
-            background: #dc2626;
-            color: #fff;
-            font-size: 16px;
+            top: -10px;
+            left: -10px;
+            background: #facc15;
+            color: #1e293b;
             font-weight: bold;
-            padding: 4px 12px;
+            padding: 6px 14px;
             border-radius: 50px;
             min-width: 24px;
             text-align: center;
-            transition: 0.3s;
-        }
-
-        nav {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 12px 0;
-        }
-
-        nav a {
-            color: #fff;
-            font-weight: 600;
-            padding: 10px 22px;
-            border-radius: 12px;
-            transition: 0.3s;
-            text-decoration: none;
-        }
-
-        nav a:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
-
-        .filter-search {
-            display: flex;
-            justify-content: space-between;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-            background: #fff;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-            align-items: center;
-        }
-
-        .filter-search select,
-        .filter-search input {
-            border: 1px solid #cbd5e1;
-            border-radius: 10px;
-            padding: 10px 12px;
-            font-size: 14px;
-        }
-
-        .filter-search button {
-            background: #1e3a8a;
-            color: white;
-            border-radius: 10px;
-            font-weight: 600;
-            padding: 10px 16px;
-            cursor: pointer;
-            border: none;
-            transition: 0.3s;
-        }
-
-        .filter-search button:hover {
-            background: #1e40af;
-        }
-
-        #markAllReadBtn {
-            background: #16a34a;
-            color: white;
-            padding: 12px 24px;
-            font-weight: bold;
-            border-radius: 12px;
-            cursor: pointer;
-            margin-bottom: 20px;
-            border: none;
-            transition: 0.3s;
-        }
-
-        #markAllReadBtn:hover {
-            background: #15803d;
         }
 
         ul.notifications {
             list-style: none;
             padding: 0;
+            margin-top: 20px;
         }
 
         ul.notifications li {
-            background: #fff;
+            background: rgba(255, 255, 255, 0.05);
             margin-bottom: 16px;
             padding: 20px;
-            border-radius: 14px;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.3s;
             cursor: grab;
             opacity: 0;
             transform: translateY(20px);
@@ -146,14 +144,14 @@
         }
 
         ul.notifications li.unread {
-            border-right: 5px solid #1e3a8a;
-            background: #e0f2fe;
+            border-right: 5px solid #facc15;
+            background: rgba(250, 204, 21, 0.2);
             font-weight: bold;
         }
 
         ul.notifications li:hover {
             transform: scale(1.02);
-            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 12px 26px rgba(250, 204, 21, 0.4);
         }
 
         .priority {
@@ -188,7 +186,7 @@
             padding: 8px 16px;
             font-size: 14px;
             font-weight: 600;
-            border-radius: 10px;
+            border-radius: 12px;
             border: none;
             cursor: pointer;
             transition: 0.2s;
@@ -241,11 +239,6 @@
             background: #eab308;
         }
 
-        .important {
-            color: #dc2626;
-            font-weight: bold;
-        }
-
         #toastContainer {
             position: fixed;
             bottom: 20px;
@@ -291,205 +284,88 @@
                 gap: 8px;
                 margin-top: 10px;
             }
-
-            .filter-search {
-                flex-direction: column;
-                gap: 12px;
-            }
         }
     </style>
 </head>
+<%- include('layouts/header') %>
 
-<body>
-    <header>
-        اعلان‌ها
-        <span id="notificationBadge">0</span>
-    </header>
-    <nav>
-        <a href="/dashboard">داشبورد</a>
-        <a href="/logout">خروج</a>
-    </nav>
+    <body>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
 
-    <div class="container">
-        <div class="filter-search">
-            <div>
-                <select id="filterType">
-                    <option value="">همه نوع‌ها</option>
-                    <option value="info">Info</option>
-                    <option value="success">Success</option>
-                    <option value="warning">Warning</option>
-                    <option value="error">Error</option>
-                </select>
-                <select id="filterPriority">
-                    <option value="">همه اولویت‌ها</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                </select>
-            </div>
-            <div style="display:flex; gap:5px;">
-                <input type="text" id="searchKeyword" placeholder="جستجو...">
-                <button id="searchBtn">🔍</button>
-            </div>
+        <div class="card">
+            <header>
+                اعلان‌ها
+                <span id="notificationBadge">2</span>
+            </header>
+
+            <ul class="notifications" id="notificationsList">
+                <li class="unread" data-id="1">
+                    <span><span class="priority info">info</span> اعلان مهم شماره ۱ - <small>2025-10-12
+                            14:00</small></span>
+                    <div class="actions">
+                        <button class="mark-read-btn">خواندن</button>
+                        <button class="archive-btn">آرشیو</button>
+                        <button class="important-btn">⭐</button>
+                    </div>
+                </li>
+                <li data-id="2">
+                    <span><span class="priority success">success</span> اعلان شماره ۲ - <small>2025-10-12
+                            13:30</small></span>
+                    <div class="actions">
+                        <button class="mark-read-btn">خواندن</button>
+                        <button class="archive-btn">آرشیو</button>
+                        <button class="important-btn">⭐</button>
+                    </div>
+                </li>
+            </ul>
         </div>
 
-        <button id="markAllReadBtn">علامت همه خوانده شده</button>
+        <div id="toastContainer"></div>
 
-        <ul class="notifications" id="notificationsList">
-            <% if (notifications && notifications.length) { %>
-                <% notifications.forEach(n=> { %>
-                    <li class="<%= n.read ? '' : 'unread' %>" data-id="<%= n.id %>">
-                        <span>
-                            <span class="priority <%= n.priority %>">
-                                <%= n.priority %>
-                            </span>
-                            <span class="<%= n.is_important ? 'important' : '' %>">
-                                <%= n.message %>
-                            </span>
-                            - <small>
-                                <%= new Date(n.created_at).toLocaleString() %>
-                            </small>
-                        </span>
-                        <div class="actions">
-                            <% if (!n.read) { %><button class="mark-read-btn" data-id="<%= n.id %>">خواندن</button>
-                                <% } %>
-                                    <button class="archive-btn" data-id="<%= n.id %>">آرشیو</button>
-                                    <button class="important-btn" data-id="<%= n.id %>">⭐</button>
-                        </div>
-                    </li>
-                    <% }) %>
-                        <% } else { %>
-                            <li>هیچ اعلانی وجود ندارد</li>
-                            <% } %>
-        </ul>
-    </div>
+        <script>
+            const notificationsList = document.getElementById('notificationsList');
+            const badge = document.getElementById('notificationBadge');
+            let unreadCount = document.querySelectorAll('li.unread').length;
+            badge.textContent = unreadCount;
 
-    <div id="toastContainer"></div>
-
-    <script>
-        const socket = io();
-        const notificationsList = document.getElementById('notificationsList');
-        const badge = document.getElementById('notificationBadge');
-        let unreadCount = document.querySelectorAll('li.unread').length;
-        badge.textContent = unreadCount;
-
-        function showToast(message, isImportant = false) {
-            const toast = document.createElement('div');
-            toast.className = 'toast' + (isImportant ? ' important' : '');
-            toast.textContent = message;
-            document.getElementById('toastContainer').appendChild(toast);
-            setTimeout(() => toast.remove(), 4000);
-        }
-
-        socket.on('newNotification', data => {
-            addNotificationToList(data.notification);
-            unreadCount++; badge.textContent = unreadCount;
-            showToast(data.notification.message, data.notification.is_important);
-        });
-
-        socket.on('notificationRead', ({ id }) => {
-            const li = document.querySelector(`li[data-id='${id}']`);
-            if (li) { li.classList.remove('unread'); unreadCount--; badge.textContent = unreadCount; }
-        });
-
-        socket.on('allNotificationsRead', () => {
-            document.querySelectorAll('li.unread').forEach(li => li.classList.remove('unread'));
-            unreadCount = 0; badge.textContent = unreadCount;
-        });
-
-        function addNotificationToList(n) {
-            const li = document.createElement('li');
-            li.className = n.read ? '' : 'unread';
-            li.dataset.id = n.id;
-            li.innerHTML = `<span>
-                <span class="priority ${n.priority}">${n.priority}</span>
-                <span class="${n.is_important ? 'important' : ''}">${n.message}</span>
-                - <small>${new Date(n.created_at).toLocaleString()}</small>
-            </span>
-            <div class="actions">
-                ${!n.read ? `<button class="mark-read-btn" data-id="${n.id}">خواندن</button>` : ''}
-                <button class="archive-btn" data-id="${n.id}">آرشیو</button>
-                <button class="important-btn" data-id="${n.id}">⭐</button>
-            </div>`;
-            notificationsList.prepend(li);
-            attachButtonListeners(li);
-            addDragAndDrop(li);
-        }
-
-        function attachButtonListeners(context = document) {
-            context.querySelectorAll('.mark-read-btn').forEach(btn => {
-                btn.onclick = async () => {
-                    const id = btn.dataset.id;
-                    const res = await fetch(`/notifications/markRead/${id}`, { method: 'POST' });
-                    if (res.ok) { btn.closest('li').classList.remove('unread'); unreadCount--; badge.textContent = unreadCount; }
-                }
-            });
-            context.querySelectorAll('.archive-btn').forEach(btn => {
-                btn.onclick = async () => {
-                    const id = btn.dataset.id;
-                    const res = await fetch(`/notifications/archive/${id}`, { method: 'POST' });
-                    if (res.ok) btn.closest('li').remove();
-                }
-            });
-            context.querySelectorAll('.important-btn').forEach(btn => {
-                btn.onclick = async () => {
-                    const id = btn.dataset.id;
-                    const res = await fetch(`/notifications/toggleImportant/${id}`, { method: 'POST' });
-                    if (res.ok) btn.closest('li').querySelector('span span:nth-child(2)').classList.toggle('important');
-                }
-            });
-        }
-        attachButtonListeners();
-
-        document.getElementById('markAllReadBtn').addEventListener('click', async () => {
-            const res = await fetch('/notifications/markAllRead', { method: 'POST' });
-            if (res.ok) { document.querySelectorAll('li.unread').forEach(li => li.classList.remove('unread')); unreadCount = 0; badge.textContent = unreadCount; }
-        });
-
-        document.getElementById('searchBtn').addEventListener('click', async () => {
-            const keyword = document.getElementById('searchKeyword').value;
-            const type = document.getElementById('filterType').value;
-            const priority = document.getElementById('filterPriority').value;
-            const params = new URLSearchParams({ keyword, type, priority });
-            const res = await fetch('/notifications/search?' + params.toString());
-            const data = await res.json();
-            notificationsList.innerHTML = '';
-            data.forEach(addNotificationToList);
-        });
-
-        let dragSrcEl = null;
-        function handleDragStart(e) { dragSrcEl = this; this.style.opacity = '0.4'; }
-        function handleDragEnd(e) { this.style.opacity = '1'; }
-        function handleDragOver(e) { e.preventDefault(); }
-        function handleDrop(e) {
-            e.stopPropagation();
-            if (dragSrcEl !== this) {
-                const parent = dragSrcEl.parentNode;
-                let nodes = Array.from(parent.children);
-                let srcIndex = nodes.indexOf(dragSrcEl);
-                let destIndex = nodes.indexOf(this);
-                if (srcIndex < destIndex) parent.insertBefore(dragSrcEl, this.nextSibling);
-                else parent.insertBefore(dragSrcEl, this);
+            // Toast example function
+            function showToast(message, isImportant = false) {
+                const toast = document.createElement('div');
+                toast.className = 'toast' + (isImportant ? ' important' : '');
+                toast.textContent = message;
+                document.getElementById('toastContainer').appendChild(toast);
+                setTimeout(() => toast.remove(), 4000);
             }
-            return false;
-        }
-        function addDragAndDrop(el) {
-            el.setAttribute('draggable', true);
-            el.addEventListener('dragstart', handleDragStart);
-            el.addEventListener('dragend', handleDragEnd);
-            el.addEventListener('dragover', handleDragOver);
-            el.addEventListener('drop', handleDrop);
-        }
-        notificationsList.querySelectorAll('li').forEach(addDragAndDrop);
-        const observer = new MutationObserver(mutations => {
-            mutations.forEach(m => {
-                if (m.addedNodes.length) m.addedNodes.forEach(n => {
-                    if (n.tagName === 'LI') addDragAndDrop(n);
-                });
+
+            // Button actions
+            function updateBadge() { badge.textContent = document.querySelectorAll('li.unread').length; }
+            document.querySelectorAll('.mark-read-btn').forEach(btn => {
+                btn.onclick = () => {
+                    btn.closest('li').classList.remove('unread'); updateBadge();
+                    showToast("اعلان خوانده شد");
+                }
             });
-        });
-        observer.observe(notificationsList, { childList: true });
-    </script>
-</body>
+            document.querySelectorAll('.archive-btn').forEach(btn => {
+                btn.onclick = () => { btn.closest('li').remove(); updateBadge(); }
+            });
+            document.querySelectorAll('.important-btn').forEach(btn => {
+                btn.onclick = () => { btn.closest('li').querySelector('span span:nth-child(2)').classList.toggle('important'); }
+            });
+
+            // Drag & Drop
+            let dragSrcEl = null;
+            function handleDragStart(e) { dragSrcEl = this; this.style.opacity = '0.4'; }
+            function handleDragEnd(e) { this.style.opacity = '1'; }
+            function handleDragOver(e) { e.preventDefault(); }
+            function handleDrop(e) { e.stopPropagation(); if (dragSrcEl !== this) { const parent = dragSrcEl.parentNode; let nodes = Array.from(parent.children); let srcIndex = nodes.indexOf(dragSrcEl); let destIndex = nodes.indexOf(this); if (srcIndex < destIndex) parent.insertBefore(dragSrcEl, this.nextSibling); else parent.insertBefore(dragSrcEl, this); } }
+            function addDragAndDrop(el) { el.setAttribute('draggable', true); el.addEventListener('dragstart', handleDragStart); el.addEventListener('dragend', handleDragEnd); el.addEventListener('dragover', handleDragOver); el.addEventListener('drop', handleDrop); }
+            notificationsList.querySelectorAll('li').forEach(addDragAndDrop);
+
+        </script>
+        <%- include('layouts/footer') %>
+
+    </body>
 
 </html>

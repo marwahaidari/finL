@@ -25,7 +25,7 @@ module.exports = {
                 totalPayments,
                 totalAssignments
             ] = await Promise.all([
-                User.countUsers ? User.countUsers() : User.count(),
+                role === 'admin' && User.countUsers ? User.countUsers() : 0,
                 Order.count(),
                 Request.count(),
                 Message.count(),
@@ -56,9 +56,9 @@ module.exports = {
                 recentMessages,
                 recentNotifications
             ] = await Promise.all([
-                Order.findRecent ? Order.findRecent() : [],
+                Order.findRecent ? Order.findRecent(role === 'officer' ? { officerId: req.user.id } : {}) : [],
                 Request.findRecent ? Request.findRecent() : [],
-                Assignment.findRecent ? Assignment.findRecent() : [],
+                Assignment.findRecent ? Assignment.findRecent(role === 'officer' ? { officerId: req.user.id } : {}) : [],
                 Message.findRecent ? Message.findRecent() : [],
                 Notification.findRecent ? Notification.findRecent() : []
             ]);
@@ -67,9 +67,16 @@ module.exports = {
             const users = role === 'admin' && User.findAll ? await User.findAll() : [];
 
             // =============================
-            // 📤 ارسال به EJS
+            // 🧭 انتخاب View براساس نقش
             // =============================
-            res.render('dashboard', {
+            let viewName = 'dashboard'; // پیش‌فرض
+            if (role === 'officer') viewName = 'officerDashboard';
+            else if (role !== 'admin') viewName = 'profile';
+
+            // =============================
+            // 📤 ارسال داده‌ها به View
+            // =============================
+            res.render(viewName, {
                 user: req.user,
                 role,
                 stats: {
@@ -85,9 +92,9 @@ module.exports = {
                     completed_orders: completedOrders,
                     orderStats: [pendingOrders, completedOrders, cancelledOrders],
                     requestStats: [
-                        await Request.countByStatus ? await Request.countByStatus('pending') : 0,
-                        await Request.countByStatus ? await Request.countByStatus('approved') : 0,
-                        await Request.countByStatus ? await Request.countByStatus('rejected') : 0
+                        Request.countByStatus ? await Request.countByStatus('pending') : 0,
+                        Request.countByStatus ? await Request.countByStatus('approved') : 0,
+                        Request.countByStatus ? await Request.countByStatus('rejected') : 0
                     ]
                 },
                 orders: recentOrders,

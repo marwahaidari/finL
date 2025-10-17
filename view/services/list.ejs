@@ -1,43 +1,185 @@
-<%- include('../layouts/header', { title: 'Services' }) %>
+<div class="max-w-6xl mx-auto mt-8 px-4">
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold">لیست سرویس‌ها</h1>
+        <button id="addServiceBtn" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition">
+            افزودن سرویس جدید
+        </button>
+    </div>
 
-    <h2>Services</h2>
-    <a href="/services/new" class="btn btn-primary mb-3">Add Service</a>
-
-    <table class="table table-bordered">
-        <thead>
+    <!-- جدول سرویس‌ها -->
+    <table class="w-full border-collapse shadow-md rounded-lg overflow-hidden" id="servicesTable">
+        <thead class="bg-gray-100">
             <tr>
-                <th>#</th>
-                <th>Service Name</th>
-                <th>Department</th>
-                <th>Fee</th>
-                <th>Description</th>
-                <th>Actions</th>
+                <th class="px-4 py-2 border text-left">نام سرویس</th>
+                <th class="px-4 py-2 border text-left">دپارتمان</th>
+                <th class="px-4 py-2 border text-left">هزینه</th>
+                <th class="px-4 py-2 border text-left">مدارک مورد نیاز</th>
+                <th class="px-4 py-2 border text-center">عملیات</th>
             </tr>
         </thead>
-        <tbody>
-            <% services.forEach((service, index)=> { %>
-                <tr>
-                    <td>
-                        <%= index + 1 %>
-                    </td>
-                    <td>
+        <tbody class="bg-white divide-y" id="servicesBody">
+            <% services.forEach(service=> { %>
+                <tr data-id="<%= service.id %>">
+                    <td class="px-4 py-2 border">
                         <%= service.name %>
                     </td>
-                    <td>
+                    <td class="px-4 py-2 border">
                         <%= service.department_name %>
                     </td>
-                    <td>$<%= service.fee %>
+                    <td class="px-4 py-2 border">
+                        <%= service.fee %> تومان
                     </td>
-                    <td>
-                        <%= service.description %>
+                    <td class="px-4 py-2 border">
+                        <%= service.required_documents || '-' %>
                     </td>
-                    <td>
-                        <a href="/services/edit/<%= service.id %>" class="btn btn-sm btn-warning">Edit</a>
-                        <a href="/services/delete/<%= service.id %>" class="btn btn-sm btn-danger">Delete</a>
+                    <td class="px-4 py-2 border text-center space-x-2">
+                        <button
+                            class="editServiceBtn px-3 py-1 bg-yellow-400 text-white rounded-md hover:bg-yellow-500 transition">ویرایش</button>
+                        <button
+                            class="deleteServiceBtn px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition">حذف</button>
                     </td>
                 </tr>
                 <% }) %>
         </tbody>
     </table>
+</div>
 
-    <%- include('../layouts/footer') %>
+<!-- Modal فرم سرویس -->
+<div id="serviceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg p-6 w-full max-w-lg relative">
+        <button id="closeModal" class="absolute top-3 right-3 text-gray-500 hover:text-gray-800">&times;</button>
+        <h2 id="modalTitle" class="text-2xl font-bold mb-4">افزودن سرویس</h2>
+        <form id="serviceForm" class="space-y-4">
+            <input type="hidden" name="id" id="serviceId">
+            <div>
+                <label class="block text-gray-700 font-medium mb-1">نام سرویس</label>
+                <input type="text" id="name"
+                    class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    required>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-medium mb-1">دپارتمان</label>
+                <select id="department_id"
+                    class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    required>
+                    <option value="">انتخاب دپارتمان</option>
+                    <% departments.forEach(dept=> { %>
+                        <option value="<%= dept.id %>">
+                            <%= dept.name %>
+                        </option>
+                        <% }) %>
+                </select>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-medium mb-1">هزینه</label>
+                <input type="number" id="fee"
+                    class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    required>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-medium mb-1">مدارک مورد نیاز</label>
+                <textarea id="required_documents" rows="3"
+                    class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+            </div>
+            <div class="flex justify-end">
+                <button type="submit"
+                    class="px-6 py-2 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-600 transition">ذخیره</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById('serviceModal');
+    const addBtn = document.getElementById('addServiceBtn');
+    const closeModal = document.getElementById('closeModal');
+    const form = document.getElementById('serviceForm');
+    const servicesBody = document.getElementById('servicesBody');
+    const modalTitle = document.getElementById('modalTitle');
+
+    // باز کردن فرم جدید
+    addBtn.addEventListener('click', () => {
+        modal.classList.remove('hidden');
+        modalTitle.textContent = 'افزودن سرویس';
+        form.reset();
+        document.getElementById('serviceId').value = '';
+    });
+
+    closeModal.addEventListener('click', () => modal.classList.add('hidden'));
+
+    // Edit buttons
+    servicesBody.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('editServiceBtn')) {
+            const tr = e.target.closest('tr');
+            const id = tr.dataset.id;
+            const res = await fetch(`/services/${id}`);
+            const data = await res.json();
+            modal.classList.remove('hidden');
+            modalTitle.textContent = 'ویرایش سرویس';
+            document.getElementById('serviceId').value = data.id;
+            document.getElementById('name').value = data.name;
+            document.getElementById('department_id').value = data.department_id;
+            document.getElementById('fee').value = data.fee;
+            document.getElementById('required_documents').value = data.required_documents;
+        }
+    });
+
+    // Delete buttons
+    servicesBody.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('deleteServiceBtn')) {
+            if (!confirm('آیا مطمئن هستید؟')) return;
+            const tr = e.target.closest('tr');
+            const id = tr.dataset.id;
+            const res = await fetch(`/services/${id}`, { method: 'DELETE' });
+            if (res.ok) tr.remove();
+        }
+    });
+
+    // Submit فرم (Create/Update)
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('serviceId').value;
+        const payload = {
+            name: document.getElementById('name').value,
+            department_id: document.getElementById('department_id').value,
+            fee: document.getElementById('fee').value,
+            required_documents: document.getElementById('required_documents').value
+        };
+        const url = id ? `/services/${id}` : '/services';
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            // اضافه کردن یا بروزرسانی جدول
+            if (id) {
+                const row = servicesBody.querySelector(`tr[data-id="${id}"]`);
+                row.children[0].textContent = data.name;
+                row.children[1].textContent = data.department_name;
+                row.children[2].textContent = data.fee + ' تومان';
+                row.children[3].textContent = data.required_documents || '-';
+            } else {
+                const tr = document.createElement('tr');
+                tr.dataset.id = data.id;
+                tr.innerHTML = `
+            <td class="px-4 py-2 border">${data.name}</td>
+            <td class="px-4 py-2 border">${data.department_name}</td>
+            <td class="px-4 py-2 border">${data.fee} تومان</td>
+            <td class="px-4 py-2 border">${data.required_documents || '-'}</td>
+            <td class="px-4 py-2 border text-center space-x-2">
+              <button class="editServiceBtn px-3 py-1 bg-yellow-400 text-white rounded-md hover:bg-yellow-500 transition">ویرایش</button>
+              <button class="deleteServiceBtn px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition">حذف</button>
+            </td>
+          `;
+                servicesBody.appendChild(tr);
+            }
+            modal.classList.add('hidden');
+        } else {
+            alert(data.error || 'خطا در ثبت سرویس');
+        }
+    });
+</script>

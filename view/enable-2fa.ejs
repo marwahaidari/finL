@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>فعال‌سازی تایید دو مرحله‌ای (2FA) - سامانه دولت الکترونیک</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
+        :root {
+            --primary: #0050b3;
+            --card-bg: rgba(255, 255, 255, 0.04);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --muted: rgba(241, 245, 249, 0.65);
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Montserrat', system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #e6eef8;
+        }
+
+        .wrap {
+            max-width: 980px;
+            margin: 48px auto;
+            padding: 16px;
+            position: relative;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 12px 30px rgba(2, 6, 23, 0.6);
+        }
+
+        h1 {
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 1.6rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .qr-placeholder {
+            width: 220px;
+            height: 220px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            border: 1px dashed rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+        }
+
+        .kbd {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 0.5rem 0.75rem;
+            border-radius: .5rem;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .btn {
+            background: linear-gradient(90deg, var(--primary), #2a6ddb);
+            color: #fefefe;
+            padding: .6rem 1rem;
+            border-radius: .75rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn.secondary {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .input {
+            width: 100%;
+            padding: .75rem;
+            border-radius: .6rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            color: #e6eef8;
+            outline: none;
+        }
+
+        .flash {
+            padding: .75rem 1rem;
+            border-radius: .75rem;
+            margin-bottom: 1rem;
+        }
+
+        .flash.success {
+            background: rgba(132, 204, 22, 0.12);
+            color: #bbf7d0;
+        }
+
+        .flash.error {
+            background: rgba(248, 113, 113, 0.08);
+            color: #fecaca;
+        }
+
+        @media (max-width:720px) {
+            .qr-placeholder {
+                width: 160px;
+                height: 160px;
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+<%- include('layouts/header') %>
+
+    <body>
+        <div class="wrap">
+
+            <div class="card">
+                <div class="flex justify-between items-start gap-4" style="align-items:flex-start;">
+                    <div>
+                        <h1>فعال‌سازی تایید دو مرحله‌ای (2FA)</h1>
+                        <div class="muted">برای افزایش امنیت حساب کاربری خود در سامانه دولت الکترونیک، تایید دو مرحله‌ای
+                            را
+                            فعال کنید. این صفحه شما را گام‌به‌گام راهنمایی می‌کند.</div>
+                    </div>
+                    <div style="text-align:left;">
+                        <a href="/dashboard" class="muted hover:opacity-90"><i
+                                class="fa-solid fa-arrow-right-from-bracket"></i> بازگشت به داشبورد</a>
+                    </div>
+                </div>
+
+                <!-- flash messages -->
+                <% if (typeof error_msg !=='undefined' && error_msg) { %>
+                    <div class="flash error mt-4">
+                        <%= error_msg %>
+                    </div>
+                    <% } %>
+                        <% if (typeof success_msg !=='undefined' && success_msg) { %>
+                            <div class="flash success mt-4">
+                                <%= success_msg %>
+                            </div>
+                            <% } %>
+
+                                <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+
+                                    <!-- Left: QR + secret + actions -->
+                                    <div>
+                                        <div class="card" style="padding:1rem;">
+                                            <h3 class="text-lg font-bold" style="color:var(--primary);">مرحله ۱ — اسکن
+                                                QR
+                                            </h3>
+                                            <p class="muted mt-1">اپلیکیشن احراز هویت را باز کرده و QR کد زیر را اسکن
+                                                کنید.
+                                            </p>
+
+                                            <div class="mt-4 flex flex-col items-center gap-4">
+                                                <div id="qrBox" class="qr-placeholder">
+                                                    <img id="qrImg"
+                                                        src="<%= typeof qrDataUrl !== 'undefined' ? qrDataUrl : '/images/qr-placeholder.png' %>"
+                                                        alt="QR"
+                                                        style="max-width:100%; max-height:100%; border-radius:6px;">
+                                                </div>
+
+                                                <div class="w-full text-center mt-2">
+                                                    <div class="muted">کد مخفی (Secret)</div>
+                                                    <div class="kbd mt-1" id="secretBox">
+                                                        <%= typeof secret !=='undefined' ? secret : '••••••••••••••••'
+                                                            %>
+                                                    </div>
+                                                    <div class="muted mt-2">این کد را در جای امن نگهداری کنید؛ در صورت
+                                                        نیاز
+                                                        به بازیابی حساب از آن استفاده خواهد شد.</div>
+                                                </div>
+
+                                                <div class="w-full flex gap-3 mt-4">
+                                                    <button id="regenBtn" class="btn secondary" type="button">تولید مجدد
+                                                        QR</button>
+                                                    <button id="startEnableBtn" class="btn" type="button">شروع
+                                                        فعال‌سازی</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Right: Verify token + backup codes -->
+                                    <div>
+                                        <div class="card" style="padding:1rem;">
+                                            <h3 class="text-lg font-bold" style="color:var(--primary);">مرحله ۲ — وارد
+                                                کردن
+                                                کد</h3>
+                                            <p class="muted mt-1">کد ۶ رقمی که اپلیکیشن تولید کرده را در اینجا وارد
+                                                کنید.
+                                            </p>
+
+                                            <div class="mt-4">
+                                                <input id="tokenInput" maxlength="6" placeholder="مثلاً: 123456"
+                                                    class="input" inputmode="numeric" />
+                                                <div class="flex gap-3 mt-4">
+                                                    <button id="verifyBtn" class="btn">تأیید کد</button>
+                                                    <button id="disableBtn" class="btn secondary">غیرفعال کردن
+                                                        2FA</button>
+                                                </div>
+                                                <div id="verifyMsg" class="muted mt-3"></div>
+                                            </div>
+
+                                            <hr class="my-4 border-dashed" />
+
+                                            <h4 class="font-semibold">کدهای پشتیبان (Backup codes)</h4>
+                                            <p class="muted mt-1">پس از فعال‌سازی، کدهای پشتیبان را مشاهده خواهید کرد —
+                                                لطفاً آنها را ذخیره کنید.</p>
+                                            <div id="backupCodes" class="mt-3">
+                                                <% if (typeof backupCodes !=='undefined' && backupCodes &&
+                                                    backupCodes.length ) { %>
+                                                    <ul class="space-y-2">
+                                                        <% backupCodes.forEach(function(code){ %>
+                                                            <li class="kbd">
+                                                                <%= code %>
+                                                            </li>
+                                                            <% }) %>
+                                                    </ul>
+                                                    <% } else { %>
+                                                        <div class="muted">کد پشتیبان هنوز تولید نشده است.</div>
+                                                        <% } %>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <div class="muted mt-4">
+                                    توجه: برای حفظ امنیت حساب خود، حتماً کدهای پشتیبان را در محل امن نگهداری کنید. در
+                                    صورت
+                                    نیاز می‌توانید 2FA را غیرفعال یا بازنشانی کنید.
+                                </div>
+            </div>
+        </div>
+
+        <script>
+            async function postJson(url, data = {}) {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (!res.ok) {
+                    const txt = await res.text();
+                    throw new Error(txt || 'خطا در درخواست');
+                }
+                return res.json();
+            }
+
+            const startEnableBtn = document.getElementById('startEnableBtn');
+            const regenBtn = document.getElementById('regenBtn');
+            const verifyBtn = document.getElementById('verifyBtn');
+            const disableBtn = document.getElementById('disableBtn');
+            const tokenInput = document.getElementById('tokenInput');
+            const qrImg = document.getElementById('qrImg');
+            const secretBox = document.getElementById('secretBox');
+            const verifyMsg = document.getElementById('verifyMsg');
+
+            startEnableBtn?.addEventListener('click', async () => {
+                startEnableBtn.disabled = true;
+                startEnableBtn.innerText = 'در حال تولید...';
+                try {
+                    const data = await postJson('/egov/2fa/enable', {}); // مسیر eGovernment
+                    if (data.qrDataUrl) qrImg.src = data.qrDataUrl;
+                    if (data.secret) secretBox.innerText = data.secret;
+                    verifyMsg.innerText = 'یک کد ۶ رقمی از اپلیکیشن بخوانید و در پایین وارد کنید.';
+                    verifyMsg.style.color = '#dbeafe';
+                } catch (err) {
+                    console.error(err);
+                    verifyMsg.innerText = 'خطا در تولید QR. دوباره تلاش کنید.';
+                    verifyMsg.style.color = '#fecaca';
+                } finally {
+                    startEnableBtn.disabled = false;
+                    startEnableBtn.innerText = 'شروع فعال‌سازی';
+                }
+            });
+
+            regenBtn?.addEventListener('click', async () => {
+                regenBtn.disabled = true;
+                regenBtn.innerText = 'در حال تولید...';
+                try {
+                    const data = await postJson('/egov/2fa/enable', { regen: true });
+                    if (data.qrDataUrl) qrImg.src = data.qrDataUrl;
+                    if (data.secret) secretBox.innerText = data.secret;
+                    verifyMsg.innerText = 'QR و secret جایگزین شدند.';
+                    verifyMsg.style.color = '#bbf7d0';
+                } catch (err) {
+                    console.error(err);
+                    verifyMsg.innerText = 'خطا در تولید مجدد.';
+                    verifyMsg.style.color = '#fecaca';
+                } finally {
+                    regenBtn.disabled = false;
+                    regenBtn.innerText = 'تولید مجدد QR';
+                }
+            });
+
+            verifyBtn?.addEventListener('click', async () => {
+                const token = tokenInput.value.trim();
+                if (!/^\d{6}$/.test(token)) {
+                    verifyMsg.innerText = 'لطفاً یک کد ۶ رقمی معتبر وارد کنید.';
+                    verifyMsg.style.color = '#fecaca';
+                    return;
+                }
+                verifyBtn.disabled = true;
+                verifyBtn.innerText = 'در حال بررسی...';
+                try {
+                    const data = await postJson('/egov/2fa/verify', { token });
+                    if (data.success) {
+                        verifyMsg.innerText = 'تأیید شد — 2FA فعال شد.';
+                        verifyMsg.style.color = '#bbf7d0';
+                        if (data.backupCodes) {
+                            const bc = document.getElementById('backupCodes');
+                            bc.innerHTML = '<ul class="space-y-2">' + data.backupCodes.map(c => `<li class="kbd">${c}</li>`).join('') + '</ul>';
+                        }
+                    } else {
+                        verifyMsg.innerText = data.message || 'کد نامعتبر است.';
+                        verifyMsg.style.color = '#fecaca';
+                    }
+                } catch (err) {
+                    console.error(err);
+                    verifyMsg.innerText = 'خطا در بررسی کد.';
+                    verifyMsg.style.color = '#fecaca';
+                } finally {
+                    verifyBtn.disabled = false;
+                    verifyBtn.innerText = 'تأیید کد';
+                }
+            });
+
+            disableBtn?.addEventListener('click', async () => {
+                if (!confirm('آیا مطمئن هستید که می‌خواهید 2FA را غیرفعال کنید؟')) return;
+                disableBtn.disabled = true;
+                disableBtn.innerText = 'در حال غیرفعال‌سازی...';
+                try {
+                    const data = await postJson('/egov/2fa/disable', {});
+                    if (data.success) {
+                        verifyMsg.innerText = '2FA غیرفعال شد.';
+                        verifyMsg.style.color = '#bbf7d0';
+                        secretBox.innerText = '••••••••••••••••';
+                        qrImg.src = '/images/qr-placeholder.png';
+                        document.getElementById('backupCodes').innerHTML = '<div class="muted">کد پشتیبان هنوز تولید نشده است.</div>';
+                    } else {
+                        verifyMsg.innerText = data.message || 'خطا در غیرفعال‌سازی.';
+                        verifyMsg.style.color = '#fecaca';
+                    }
+                } catch (err) {
+                    console.error(err);
+                    verifyMsg.innerText = 'خطا در غیرفعال‌سازی.';
+                    verifyMsg.style.color = '#fecaca';
+                } finally {
+                    disableBtn.disabled = false;
+                    disableBtn.innerText = 'غیرفعال کردن 2FA';
+                }
+            });
+        </script>
+        <%- include('layouts/footer') %>
+
+    </body>
+
+</html>

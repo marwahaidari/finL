@@ -1,36 +1,97 @@
-<%- include('../layouts/header', { title: 'Departments' }) %>
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
 
-    <h2>Departments</h2>
-    <a href="/departments/new" class="btn btn-primary mb-3">Add Department</a>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لیست دپارتمان‌ها</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
 
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% departments.forEach((dept, index)=> { %>
-                <tr>
-                    <td>
-                        <%= index + 1 %>
-                    </td>
-                    <td>
-                        <%= dept.name %>
-                    </td>
-                    <td>
-                        <%= dept.description %>
-                    </td>
-                    <td>
-                        <a href="/departments/edit/<%= dept.id %>" class="btn btn-sm btn-warning">Edit</a>
-                        <a href="/departments/delete/<%= dept.id %>" class="btn btn-sm btn-danger">Delete</a>
-                    </td>
-                </tr>
-                <% }) %>
-        </tbody>
-    </table>
+<body class="bg-gray-100 p-6 font-sans">
 
-    <%- include('../layouts/footer') %>
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-2xl font-bold">دپارتمان‌ها</h1>
+            <a href="/department/form" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">دپارتمان
+                جدید</a>
+        </div>
+
+        <!-- Search -->
+        <form method="GET" action="/department/search" class="mb-4 flex gap-2">
+            <input type="text" name="q" value="<%= typeof q !== 'undefined' ? q : '' %>" placeholder="جستجوی دپارتمان"
+                class="flex-1 p-2 border rounded">
+            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">جستجو</button>
+        </form>
+
+        <!-- Table -->
+        <div class="overflow-x-auto bg-white rounded shadow">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام
+                        </th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            توضیح</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            وضعیت</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            کارمندان</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            عملیات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <% departments.forEach(dept=> { %>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <%= dept.name %>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <%= dept.description %>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <% if (dept.is_active) { %>
+                                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded">فعال</span>
+                                    <% } else { %>
+                                        <span class="bg-red-100 text-red-800 px-2 py-1 rounded">غیرفعال</span>
+                                        <% } %>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <%= dept.employeesCount || 0 %>
+                            </td>
+                            <td class="px-6 py-4 text-center space-x-2">
+                                <a href="/department/form/<%= dept.id %>"
+                                    class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">ویرایش</a>
+                                <form action="/department/<%= dept.id %>?_method=DELETE" method="POST" class="inline">
+                                    <button type="submit"
+                                        class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">حذف</button>
+                                </form>
+                                <form action="/department/<%= dept.id %>/toggle?_method=PATCH" method="POST"
+                                    class="inline">
+                                    <button type="submit"
+                                        class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                                        <%= dept.is_active ? 'غیرفعال کن' : 'فعال کن' %>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        <% }) %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-4 flex justify-center space-x-2">
+            <% for(let i=1; i<=totalPages; i++) { %>
+                <a href="/department?page=<%= i %>"
+                    class="px-3 py-1 rounded <%= i===currentPage ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300' %>">
+                    <%= i %>
+                </a>
+                <% } %>
+        </div>
+    </div>
+
+</body>
+
+</html>

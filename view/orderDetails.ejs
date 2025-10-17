@@ -3,237 +3,175 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>جزئیات سفارش #<%= order.id %>
     </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
         body {
-            font-family: Vazir, sans-serif;
-            background-color: #f0f4f8;
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            min-height: 100vh;
+            color: #f1f5f9;
+            padding: 3rem 1rem;
         }
 
         .card {
-            background-color: #fff;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease-in-out;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 2rem;
+            padding: 2rem;
+            max-width: 700px;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
         }
 
         .badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            padding: 0.3rem 0.6rem;
             border-radius: 9999px;
             font-weight: 600;
-            font-size: 0.875rem;
         }
 
-        .badge-paid {
-            background-color: #10b981;
-            color: white;
+        a {
+            color: #facc15;
+            text-decoration: underline;
         }
 
-        .badge-unpaid {
-            background-color: #ef4444;
-            color: white;
+        .flex-gap {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
 
-        .timeline {
-            border-left: 3px solid #3b82f6;
-            margin-left: 1rem;
-            padding-left: 1rem;
-        }
-
-        .timeline-item {
+        .flash-message {
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
             margin-bottom: 1rem;
-            position: relative;
         }
 
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -10px;
-            top: 0;
-            width: 1rem;
-            height: 1rem;
-            background-color: #3b82f6;
-            border-radius: 50%;
-            border: 3px solid #fff;
+        .error-msg {
+            background: rgba(248, 113, 113, 0.2);
+            color: #f87171;
         }
 
-        textarea {
-            resize: none;
+        .success-msg {
+            background: rgba(132, 204, 22, 0.2);
+            color: #84cc16;
         }
     </style>
 </head>
+<%- include('layouts/header') %>
 
-<body class="p-6">
-
-    <!-- Header -->
-    <header class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold flex items-center gap-2">
-            <i data-lucide="clipboard"></i> جزئیات سفارش #<%= order.id %>
-        </h1>
-        <a href="/orders" class="text-blue-600 hover:underline flex items-center gap-1">
-            <i data-lucide="arrow-left"></i> بازگشت
-        </a>
-    </header>
-
-    <!-- اطلاعات سفارش -->
-    <section class="card mb-6">
-        <h2 class="text-xl font-semibold mb-4">اطلاعات سفارش</h2>
-        <p><strong>عنوان:</strong>
-            <%= order.title %>
-        </p>
-        <p><strong>توضیحات:</strong>
-            <%= order.description %>
-        </p>
-        <p><strong>کاربر:</strong>
-            <%= order.user_name || order.user?.full_name || '---' %>
-        </p>
-        <p><strong>تاریخ ایجاد:</strong>
-            <%= new Date(order.created_at).toLocaleString('fa-IR') %>
-        </p>
-
-        <p><strong>وضعیت:</strong>
-            <% if(order.status==='pending' ){ %>
-                <span class="badge bg-yellow-500 text-white">در حال انجام ⚠️</span>
-                <% } else if(order.status==='completed' ){ %>
-                    <span class="badge bg-blue-500 text-white">تکمیل‌شده ✅</span>
-                    <% } else { %>
-                        <span class="badge bg-red-500 text-white">لغوشده ❌</span>
-                        <% } %>
-        </p>
-
-        <!-- وضعیت پرداخت -->
-        <p id="payment-status" class="mt-3">
-            <strong>پرداخت:</strong>
-            <% if(order.paid){ %>
-                <span class="badge badge-paid">پرداخت شده ✅</span>
-                <% } else { %>
-                    <span class="badge badge-unpaid">پرداخت نشده ❌</span>
-                    <% } %>
-        </p>
-
-        <% if(!order.paid){ %>
-            <form action="/orders/pay/<%= order.id %>" method="POST" class="mt-4">
-                <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                    پرداخت سفارش
-                </button>
-            </form>
+    <body>
+        <% if (typeof error_msg !=='undefined' && error_msg) { %>
+            <div class="flash-message error-msg">
+                <%= error_msg %>
+            </div>
             <% } %>
-    </section>
-
-    <!-- فایل‌ها -->
-    <% if(order.attachments && order.attachments.length>0){ %>
-        <section class="card mb-6">
-            <h2 class="text-xl font-semibold mb-4">فایل‌ها و پیوست‌ها</h2>
-            <ul class="space-y-2">
-                <% order.attachments.forEach(file=> { %>
-                    <li>
-                        <a href="/uploads/<%= file.filename %>" target="_blank"
-                            class="text-blue-600 hover:underline flex items-center gap-2">
-                            <i data-lucide="file-text"></i>
-                            <%= file.originalname %>
-                        </a>
-                    </li>
-                    <% }) %>
-            </ul>
-        </section>
-        <% } %>
-
-            <!-- تاریخچه وضعیت -->
-            <% if(order.history && order.history.length>0){ %>
-                <section class="card mb-6">
-                    <h2 class="text-xl font-semibold mb-4">تاریخچه وضعیت سفارش</h2>
-                    <div class="timeline">
-                        <% order.history.forEach(item=> { %>
-                            <div class="timeline-item">
-                                <p><strong>
-                                        <%= item.status %>
-                                    </strong> - <%= new Date(item.date).toLocaleString('fa-IR') %>
-                                </p>
-                            </div>
-                            <% }) %>
+                <% if (typeof success_msg !=='undefined' && success_msg) { %>
+                    <div class="flash-message success-msg">
+                        <%= success_msg %>
                     </div>
-                </section>
-                <% } %>
+                    <% } %>
 
-                    <!-- بازخوردها -->
-                    <section class="card mb-6">
-                        <h2 class="text-xl font-semibold mb-4">بازخوردها</h2>
-                        <% if(reviews && reviews.length>0){ %>
-                            <ul class="space-y-4">
-                                <% reviews.forEach(r=> { %>
-                                    <li class="border p-3 rounded-lg hover:shadow-md transition duration-150">
-                                        <p><strong>
-                                                <%= r.username %>
-                                            </strong> ⭐ <%= r.rating %>/5</p>
-                                        <p class="text-gray-700">
-                                            <%= r.comment %>
-                                        </p>
-                                    </li>
-                                    <% }) %>
-                            </ul>
-                            <% } else { %>
-                                <p class="text-gray-500">هیچ نظری موجود نیست.</p>
+                        <div class="card">
+                            <h1 class="text-2xl font-bold mb-4 flex items-center gap-2"><i data-lucide="clipboard"></i>
+                                جزئیات سفارش
+                                #<%= order.id %>
+                            </h1>
+
+                            <p class="mb-2"><strong>عنوان:</strong>
+                                <%= order.title || '—' %>
+                            </p>
+                            <p class="mb-2"><strong>توضیحات:</strong>
+                                <%= order.description || '—' %>
+                            </p>
+                            <p class="mb-2"><strong>کاربر:</strong>
+                                <%= order.user_name || '—' %>
+                            </p>
+                            <p class="mb-2"><strong>ایجاد شده در:</strong>
+                                <%= order.created_at ? new Date(order.created_at).toLocaleString('fa-IR') : '—' %>
+                            </p>
+
+                            <p class="mb-2"><strong>وضعیت:</strong>
+                                <% if(order.status?.toLowerCase()==='pending' ){ %>
+                                    <span class="badge" style="background:#f59e0b;color:white;">در حال انجام</span>
+                                    <% } else if(order.status?.toLowerCase()==='completed' ){ %>
+                                        <span class="badge" style="background:#3b82f6;color:white;">تکمیل‌شده</span>
+                                        <% } else if(order.status){ %>
+                                            <span class="badge" style="background:#ef4444;color:white;">
+                                                <%= order.status %>
+                                            </span>
+                                            <% } else { %>
+                                                —
+                                                <% } %>
+                            </p>
+
+                            <p class="mb-2" id="payment-status"><strong>پرداخت:</strong>
+                                <% if(order.paid){ %>
+                                    <span class="badge" style="background:#10b981;color:white;">پرداخت شده ✅</span>
+                                    <% } else { %>
+                                        <span class="badge" style="background:#ef4444;color:white;">پرداخت نشده ❌</span>
+                                        <% } %>
+                            </p>
+
+                            <% if(!order.paid){ %>
+                                <form action="/orders/pay/<%= order.id %>" method="POST">
+                                    <button
+                                        class="w-full py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white">پرداخت
+                                        سفارش</button>
+                                </form>
                                 <% } %>
+                        </div>
 
-                                    <form action="/reviews/<%= order.id %>" method="POST" class="mt-4 space-y-3">
-                                        <h3 class="font-semibold">افزودن نظر جدید</h3>
-                                        <label>امتیاز:</label>
-                                        <select name="rating" required class="border p-2 rounded-lg w-full">
-                                            <option value="1">1</option>
-                                            <option value="2">2</option>
-                                            <option value="3">3</option>
-                                            <option value="4">4</option>
-                                            <option value="5">5</option>
-                                        </select>
-                                        <label>نظر:</label>
-                                        <textarea name="comment" placeholder="نظر خود را بنویسید..." required
-                                            class="border p-2 rounded-lg w-full"></textarea>
-                                        <button type="submit"
-                                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                                            ارسال نظر
-                                        </button>
-                                    </form>
-                    </section>
+                        <% if(order.attachments?.length>0){ %>
+                            <div class="card">
+                                <h2 class="text-xl font-semibold mb-3">پیوست‌ها</h2>
+                                <ul class="space-y-2">
+                                    <% order.attachments.forEach(file=> {
+                                        const url = file.filepath || file.path || ('/uploads/' + file.filename);
+                                        const name = file.originalname || file.filename || 'فایل';
+                                        %>
+                                        <li><a href="<%= url %>" target="_blank"
+                                                class="flex items-center gap-2 text-facc15 hover:underline"><i
+                                                    data-lucide="file-text"></i>
+                                                <%= name %>
+                                            </a></li>
+                                        <% }) %>
+                                </ul>
+                            </div>
+                            <% } %>
 
-                    <!-- دکمه‌های عملیاتی -->
-                    <section class="card mb-6 flex gap-4">
-                        <a href="/orders/edit/<%= order.id %>"
-                            class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition flex items-center gap-2">
-                            <i data-lucide="edit-2"></i> ویرایش سفارش
-                        </a>
+                                <div class="card flex-gap">
+                                    <a href="/orders/edit/<%= order.id %>"
+                                        class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 flex items-center gap-2"><i
+                                            data-lucide="edit-2"></i> ویرایش</a>
+                                    <a href="/orders/delete/<%= order.id %>"
+                                        class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 flex items-center gap-2"><i
+                                            data-lucide="trash-2"></i> حذف</a>
+                                </div>
 
-                        <!-- دکمه حذف جدید -->
-                        <a href="/orders/delete/<%= order.id %>"
-                            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center gap-2">
-                            <i data-lucide="trash-2"></i> حذف سفارش
-                        </a>
-                    </section>
+                                <script>
+                                    lucide.createIcons();
+                                    const socket = io();
+                                    const currentOrderId = "<%= order.id %>";
+                                    socket.on('orderPaid', (data) => {
+                                        const incoming = data.id || data.orderId || data.order_id;
+                                        if (String(incoming) === String(currentOrderId)) {
+                                            const el = document.getElementById('payment-status');
+                                            if (el) el.innerHTML = '<strong>پرداخت:</strong> <span class="badge" style="background:#10b981;color:white;">پرداخت شده ✅</span>';
+                                        }
+                                    });
+                                </script>
+                                <%- include('layouts/footer') %>
 
-                    <script>
-                        lucide.createIcons();
-                        const socket = io();
-                        const currentOrderId = "<%= order.id %>";
-
-                        socket.on('orderPaid', (updatedOrder) => {
-                            if (String(updatedOrder.id) === currentOrderId) {
-                                const paymentStatus = document.getElementById('payment-status');
-                                paymentStatus.innerHTML = `<strong>پرداخت:</strong> <span class="badge badge-paid">پرداخت شده ✅</span>`;
-                            }
-                        });
-                    </script>
-
-</body>
+    </body>
 
 </html>

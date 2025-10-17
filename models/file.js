@@ -99,7 +99,7 @@ class File {
     // گرفتن فایل‌های یک سفارش با pagination
     // ===============================
     static async findByOrder(orderId, { limit = 50, offset = 0, activeOnly = true } = {}) {
-        let query = `SELECT id, filename, filepath, mime_type, size, uploaded_at FROM files WHERE order_id = $1`;
+        let query = `SELECT id, filename, filepath, mimetype, size, uploaded_at FROM files WHERE order_id = $1`;
         const params = [orderId];
         if (activeOnly) query += ' AND is_active = TRUE';
         query += ' ORDER BY uploaded_at DESC LIMIT $2 OFFSET $3';

@@ -1,36 +1,136 @@
-<h1>Officer Dashboard</h1>
-<a href="/dashboard">Back to Dashboard</a> | <a href="/logout">Logout</a>
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
 
-<table border="1">
-    <tr>
-        <th>ID</th>
-        <th>Title</th>
-        <th>Description</th>
-        <th>Status</th>
-        <th>Actions</th>
-    </tr>
-    <% orders.forEach(order=> { %>
-        <tr>
-            <td>
-                <%= order.id %>
-            </td>
-            <td>
-                <%= order.title %>
-            </td>
-            <td>
-                <%= order.description %>
-            </td>
-            <td>
-                <%= order.status || 'Pending' %>
-            </td>
-            <td>
-                <form action="/officer/orders/<%= order.id %>/approve" method="POST" style="display:inline;">
-                    <button type="submit">Approve</button>
-                </form>
-                <form action="/officer/orders/<%= order.id %>/reject" method="POST" style="display:inline;">
-                    <button type="submit">Reject</button>
-                </form>
-            </td>
-        </tr>
-        <% }) %>
-</table>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= title %>
+    </title>
+
+    <!-- سبک ساده و شیک -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f9fafb;
+            font-family: 'Vazir', sans-serif;
+        }
+
+        .dashboard-container {
+            max-width: 1100px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.8s ease;
+        }
+
+        h1 {
+            color: #2b2b2b;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .user-info {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            border-right: 4px solid #007bff;
+        }
+
+        .order-card {
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.2s ease;
+        }
+
+        .order-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .status {
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 10px;
+        }
+
+        .status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<%- include('layouts/header') %>
+
+    <body>
+        <div class="dashboard-container">
+            <h1>داشبورد افسر</h1>
+
+            <div class="user-info">
+                <h5>👮‍♂️ خوش آمدید، <%= user.name %>
+                </h5>
+                <p>نقش شما: <strong>
+                        <%= user.role %>
+                    </strong></p>
+                <a href="/logout" class="btn btn-outline-danger btn-sm mt-2">خروج</a>
+            </div>
+
+            <% if (orders && orders.length> 0) { %>
+                <h4 class="mb-3">📋 لیست سفارش‌ها</h4>
+                <% orders.forEach(order=> { %>
+                    <div class="order-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6>سفارش #<%= order._id %>
+                                </h6>
+                                <p class="mb-1">کاربر: <strong>
+                                        <%= order.user?.name || 'نامشخص' %>
+                                    </strong></p>
+                                <p class="mb-1">تاریخ: <%= new Date(order.createdAt).toLocaleDateString('fa-IR') %>
+                                </p>
+                            </div>
+                            <div>
+                                <span class="status <%= order.status %>">
+                                    <%= order.status==='pending' ? 'در حال بررسی' : order.status==='completed'
+                                        ? 'تکمیل‌شده' : order.status==='cancelled' ? 'لغو شده' : 'نامشخص' %>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <% }) %>
+                        <% } else { %>
+                            <p class="text-muted text-center">هنوز سفارشی برای نمایش وجود ندارد.</p>
+                            <% } %>
+        </div>
+        <%- include('layouts/footer') %>
+
+    </body>
+
+</html>

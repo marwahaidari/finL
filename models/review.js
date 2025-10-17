@@ -200,6 +200,59 @@ class Review {
 
         return result.rows[0];
     }
+    // گرفتن همه ریویوها با فیلتر اختیاری
+    static async findAll({
+        userId = null,
+        orderId = null,
+        activeOnly = true,
+        minRating = null,
+        limit = 50,
+        offset = 0,
+        sortBy = 'created_at',
+        sortOrder = 'DESC'
+    } = {}) {
+        try {
+            let query = `
+            SELECT r.*, u.name AS user_name, o.title AS order_title
+            FROM reviews r
+            JOIN users u ON r.user_id = u.id
+            JOIN orders o ON r.order_id = o.id
+            WHERE 1=1
+        `;
+            const params = [];
+            let idx = 1;
+
+            if (userId) {
+                query += ` AND r.user_id = $${idx++}`;
+                params.push(userId);
+            }
+            if (orderId) {
+                query += ` AND r.order_id = $${idx++}`;
+                params.push(orderId);
+            }
+            if (activeOnly) {
+                query += ` AND r.is_active = TRUE`;
+            }
+            if (minRating) {
+                query += ` AND r.rating >= $${idx++}`;
+                params.push(minRating);
+            }
+
+            const allowedSortBy = ['created_at', 'rating'];
+            const allowedSortOrder = ['ASC', 'DESC'];
+            if (!allowedSortBy.includes(sortBy)) sortBy = 'created_at';
+            if (!allowedSortOrder.includes(sortOrder.toUpperCase())) sortOrder = 'DESC';
+
+            query += ` ORDER BY r.${sortBy} ${sortOrder} LIMIT $${idx++} OFFSET $${idx++}`;
+            params.push(limit, offset);
+
+            const result = await pool.query(query, params);
+            return result.rows;
+        } catch (err) {
+            console.error('❌ Review.findAll error:', err);
+            return [];
+        }
+    }
 
     // حذف کامل
     static async delete(id) {

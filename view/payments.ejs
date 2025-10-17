@@ -1,52 +1,176 @@
 <!DOCTYPE html>
-<html>
+<html lang="fa" dir="rtl">
+<%- include('layouts/header') %>
 
-<head>
-    <title>Paid Orders</title>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>مدیریت پرداخت‌ها</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="/socket.io/socket.io.js"></script>
+    </head>
 
-<body>
-    <h1>Paid Orders</h1>
-    <a href="/dashboard">Back to Dashboard</a> |
-    <a href="/orders">All Orders</a> |
-    <a href="/logout">Logout</a>
+    <body class="bg-gray-100 font-sans p-6">
 
-    <table border="1" cellpadding="5" cellspacing="0">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Title</th>
-                <th>Description</th>
-                <th>Created At</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% if (orders.length===0) { %>
-                <tr>
-                    <td colspan="5">No paid orders found.</td>
-                </tr>
-                <% } else { %>
-                    <% orders.forEach(order=> { %>
+        <div class="max-w-6xl mx-auto">
+
+            <!-- فرم ایجاد پرداخت -->
+            <div class="bg-white p-6 rounded shadow mb-6">
+                <h2 class="text-xl font-bold mb-4">ایجاد پرداخت جدید</h2>
+                <form id="createPaymentForm" class="space-y-4">
+                    <input type="text" name="userId" placeholder="User ID" class="w-full border p-2 rounded" required>
+                    <input type="number" name="amount" placeholder="Amount" class="w-full border p-2 rounded" required>
+                    <input type="text" name="method" placeholder="Method" class="w-full border p-2 rounded" required>
+                    <input type="text" name="description" placeholder="Description" class="w-full border p-2 rounded">
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">ثبت
+                        پرداخت</button>
+                </form>
+            </div>
+
+            <!-- فیلتر لیست پرداخت‌ها -->
+            <div class="bg-white p-6 rounded shadow mb-6">
+                <h2 class="text-xl font-bold mb-4">لیست پرداخت‌ها</h2>
+                <div class="flex gap-4 mb-4">
+                    <select id="filterStatus" class="border p-2 rounded">
+                        <option value="">همه وضعیت‌ها</option>
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                    <select id="filterMethod" class="border p-2 rounded">
+                        <option value="">همه روش‌ها</option>
+                        <option value="card">Card</option>
+                        <option value="online">Online</option>
+                    </select>
+                    <button id="applyFilters" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">اعمال
+                        فیلتر</button>
+                </div>
+
+                <!-- جدول پرداخت‌ها -->
+                <table class="w-full border-collapse border border-gray-300 text-right">
+                    <thead class="bg-gray-200">
                         <tr>
-                            <td>
-                                <%= order.id %>
-                            </td>
-                            <td>
-                                <%= order.title %>
-                            </td>
-                            <td>
-                                <%= order.description %>
-                            </td>
-                            <td>
-                                <%= new Date(order.created_at).toLocaleString() %>
-                            </td>
-                            <td>Paid ✅</td>
+                            <th class="border p-2">ID</th>
+                            <th class="border p-2">User ID</th>
+                            <th class="border p-2">Amount</th>
+                            <th class="border p-2">Method</th>
+                            <th class="border p-2">Status</th>
+                            <th class="border p-2">Actions</th>
                         </tr>
-                        <% }) %>
-                            <% } %>
-        </tbody>
-    </table>
-</body>
+                    </thead>
+                    <tbody id="paymentsTableBody">
+                        <!-- محتوا با JS اضافه می‌شود -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- تاریخچه پرداخت -->
+            <div class="bg-white p-6 rounded shadow mb-6">
+                <h2 class="text-xl font-bold mb-4">تاریخچه پرداخت</h2>
+                <div id="paymentHistory" class="space-y-2">
+                    <!-- تاریخچه با JS اضافه می‌شود -->
+                </div>
+            </div>
+
+        </div>
+
+        <script>
+            const socket = io();
+            const paymentsTableBody = document.getElementById('paymentsTableBody');
+            const paymentHistory = document.getElementById('paymentHistory');
+
+            async function fetchPayments(status = '', method = '') {
+                const userId = ''; // می‌توانید از login session بگیرید
+                const params = new URLSearchParams({ status, method });
+                const res = await fetch(`/api/payments/user/${userId}?${params.toString()}`);
+                const data = await res.json();
+                renderPayments(data);
+            }
+
+            function renderPayments(payments) {
+                paymentsTableBody.innerHTML = '';
+                payments.forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'border';
+                    tr.innerHTML = `
+            <td class="border p-2">${p.id}</td>
+            <td class="border p-2">${p.userId}</td>
+            <td class="border p-2">${p.amount}</td>
+            <td class="border p-2">${p.method}</td>
+            <td class="border p-2">${p.status}</td>
+            <td class="border p-2 space-x-2">
+                <button class="bg-yellow-400 px-2 py-1 rounded" onclick="markAsPaid(${p.id})">Mark as Paid</button>
+                <button class="bg-red-500 px-2 py-1 text-white rounded" onclick="softDelete(${p.id})">Soft Delete</button>
+                <button class="bg-gray-700 px-2 py-1 text-white rounded" onclick="deletePayment(${p.id})">Delete</button>
+                <button class="bg-blue-400 px-2 py-1 text-white rounded" onclick="viewHistory(${p.id})">History</button>
+            </td>
+        `;
+                    paymentsTableBody.appendChild(tr);
+                });
+            }
+
+            async function markAsPaid(id) {
+                await fetch(`/api/payments/${id}/mark-paid`, { method: 'PUT' });
+                fetchPayments();
+            }
+
+            async function softDelete(id) {
+                await fetch(`/api/payments/${id}/soft`, { method: 'DELETE' });
+                fetchPayments();
+            }
+
+            async function deletePayment(id) {
+                await fetch(`/api/payments/${id}`, { method: 'DELETE' });
+                fetchPayments();
+            }
+
+            async function viewHistory(id) {
+                const res = await fetch(`/api/payments/${id}/history`);
+                const data = await res.json();
+                paymentHistory.innerHTML = '';
+                data.forEach(h => {
+                    const div = document.createElement('div');
+                    div.className = 'p-2 border rounded bg-gray-50';
+                    div.innerText = `${h.date} - ${h.message}`;
+                    paymentHistory.appendChild(div);
+                });
+            }
+
+            // فرم ایجاد پرداخت
+            document.getElementById('createPaymentForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const payload = Object.fromEntries(formData.entries());
+                await fetch('/api/payments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                e.target.reset();
+                fetchPayments();
+            });
+
+            // فیلتر
+            document.getElementById('applyFilters').addEventListener('click', () => {
+                const status = document.getElementById('filterStatus').value;
+                const method = document.getElementById('filterMethod').value;
+                fetchPayments(status, method);
+            });
+
+            // ===========================
+            // Socket.IO events
+            // ===========================
+            socket.on('paymentCreated', data => fetchPayments());
+            socket.on('paymentStatusUpdated', data => fetchPayments());
+            socket.on('paymentSoftDeleted', data => fetchPayments());
+            socket.on('paymentDeleted', data => fetchPayments());
+            socket.on('paymentMarkedAsPaid', data => fetchPayments());
+
+            // fetch اولیه
+            fetchPayments();
+        </script>
+        <%- include('layouts/footer') %>
+
+    </body>
 
 </html>

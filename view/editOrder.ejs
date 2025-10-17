@@ -2,115 +2,142 @@
 <html lang="fa" dir="rtl">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ویرایش سفارش</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>ویرایش سفارش #<%= order.id %>
+    </title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
         body {
-            font-family: Vazir, sans-serif;
-            background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 4rem;
+            color: #f1f5f9;
         }
 
         .card {
             backdrop-filter: blur(10px);
-            background-color: rgba(255, 255, 255, 0.85);
-            border-radius: 1.5rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 2rem;
+            padding: 2.5rem;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
         }
 
-        input:focus,
-        textarea:focus,
-        select:focus {
+        .input-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .input-container i {
+            padding: 0 1rem;
+            color: #facc15;
+            font-size: 1.2rem;
+        }
+
+        .input-container input,
+        .input-container select,
+        .input-container textarea {
+            flex: 1;
+            padding: 1rem;
+            background: transparent;
+            border: none;
+            color: #f1f5f9;
+            font-size: 1rem;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        button {
+            background: linear-gradient(90deg, #facc15, #eab308);
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            border: none;
+            width: 100%;
+            font-weight: 600;
+            color: #1e293b;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(250, 204, 21, 0.6);
         }
     </style>
 </head>
+<%- include('layouts/header') %>
 
-<body class="min-h-screen flex items-center justify-center p-6">
+    <body>
+        <div class="card">
+            <h1 class="text-2xl font-bold mb-6 text-center">ویرایش سفارش #<%= order.id %>
+            </h1>
 
-    <div class="card p-8 w-full max-w-xl">
-        <h1 class="text-3xl font-bold mb-6 text-center text-gray-800 flex items-center justify-center gap-2">
-            <i data-lucide="edit-3" class="text-blue-600"></i> ویرایش سفارش
-        </h1>
+            <form action="/orders/edit/<%= order.id %>" method="POST" enctype="multipart/form-data" class="space-y-4">
+                <div class="input-container">
+                    <i class="fa-solid fa-heading"></i>
+                    <input type="text" name="title" value="<%= order.title %>" placeholder="عنوان" required>
+                </div>
 
-        <form action="/orders/edit/<%= order.id %>" method="POST" enctype="multipart/form-data" class="space-y-6">
+                <div class="input-container">
+                    <i class="fa-solid fa-align-left"></i>
+                    <textarea name="description" placeholder="توضیحات" required><%= order.description %></textarea>
+                </div>
 
-            <!-- عنوان سفارش -->
-            <div>
-                <label class="block text-gray-700 font-semibold mb-2">عنوان سفارش</label>
-                <input type="text" name="title" required value="<%= order.title %>"
-                    class="w-full border border-gray-300 rounded-xl p-4 text-gray-800 placeholder-gray-400 transition duration-200 hover:border-blue-400 focus:border-blue-500">
-            </div>
+                <div class="input-container">
+                    <i class="fa-solid fa-building"></i>
+                    <select name="department" required>
+                        <option value="">دپارتمان</option>
+                        <option value="Sales" <%=order.department==='Sales' ? 'selected' : '' %>>فروش</option>
+                        <option value="Support" <%=order.department==='Support' ? 'selected' : '' %>>پشتیبانی</option>
+                        <option value="IT" <%=order.department==='IT' ? 'selected' : '' %>>IT</option>
+                        <option value="HR" <%=order.department==='HR' ? 'selected' : '' %>>HR</option>
+                    </select>
+                </div>
 
-            <!-- توضیحات -->
-            <div>
-                <label class="block text-gray-700 font-semibold mb-2">توضیحات</label>
-                <textarea name="description" required
-                    class="w-full border border-gray-300 rounded-xl p-4 h-40 text-gray-800 placeholder-gray-400 transition duration-200 hover:border-blue-400 focus:border-blue-500 resize-none"><%= order.description %></textarea>
-            </div>
+                <div class="input-container">
+                    <i class="fa-solid fa-exclamation-circle"></i>
+                    <select name="priority" required>
+                        <option value="">اولویت</option>
+                        <option value="Low" <%=order.priority==='Low' ? 'selected' : '' %>>کم</option>
+                        <option value="Medium" <%=order.priority==='Medium' ? 'selected' : '' %>>متوسط</option>
+                        <option value="High" <%=order.priority==='High' ? 'selected' : '' %>>زیاد</option>
+                    </select>
+                </div>
 
-            <!-- دپارتمان -->
-            <div>
-                <label class="block text-gray-700 font-semibold mb-2">دپارتمان</label>
-                <select name="department" required
-                    class="w-full border border-gray-300 rounded-xl p-4 text-gray-800 transition duration-200 hover:border-blue-400 focus:border-blue-500">
-                    <option value="">-- انتخاب دپارتمان --</option>
-                    <option value="Sales" <%=order.department==='Sales' ? 'selected' : '' %>>فروش</option>
-                    <option value="Support" <%=order.department==='Support' ? 'selected' : '' %>>پشتیبانی</option>
-                    <option value="IT" <%=order.department==='IT' ? 'selected' : '' %>>فناوری اطلاعات</option>
-                    <option value="HR" <%=order.department==='HR' ? 'selected' : '' %>>منابع انسانی</option>
-                </select>
-            </div>
+                <div class="input-container">
+                    <i class="fa-solid fa-calendar"></i>
+                    <input type="date" name="eta"
+                        value="<%= order.eta ? (new Date(order.eta)).toISOString().slice(0,10) : '' %>">
+                </div>
 
-            <!-- اولویت -->
-            <div>
-                <label class="block text-gray-700 font-semibold mb-2">اولویت</label>
-                <select name="priority" required
-                    class="w-full border border-gray-300 rounded-xl p-4 text-gray-800 transition duration-200 hover:border-blue-400 focus:border-blue-500">
-                    <option value="">-- انتخاب اولویت --</option>
-                    <option value="Low" <%=order.priority==='Low' ? 'selected' : '' %>>کم</option>
-                    <option value="Medium" <%=order.priority==='Medium' ? 'selected' : '' %>>متوسط</option>
-                    <option value="High" <%=order.priority==='High' ? 'selected' : '' %>>زیاد</option>
-                </select>
-            </div>
+                <div class="input-container">
+                    <i class="fa-solid fa-paperclip"></i>
+                    <input type="file" name="attachments" multiple>
+                </div>
 
-            <!-- تاریخ تخمینی -->
-            <div>
-                <label class="block text-gray-700 font-semibold mb-2">تاریخ تخمینی</label>
-                <input type="date" name="eta" value="<%= order.eta ? order.eta.toISOString().split('T')[0] : '' %>"
-                    class="w-full border border-gray-300 rounded-xl p-4 text-gray-800 transition duration-200 hover:border-blue-400 focus:border-blue-500">
-            </div>
-
-            <!-- ضمیمه‌ها -->
-            <div>
-                <label class="block text-gray-700 font-semibold mb-2">افزودن ضمیمه جدید (اختیاری)</label>
-                <input type="file" name="attachments" multiple
-                    class="w-full border border-gray-300 rounded-xl p-4 text-gray-800 transition duration-200 hover:border-blue-400 focus:border-blue-500">
-            </div>
-
-            <!-- دکمه بروزرسانی -->
-            <button type="submit"
-                class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-2xl font-bold hover:from-green-700 hover:to-emerald-700 transition flex items-center justify-center gap-3">
-                <i data-lucide="save"></i> بروزرسانی سفارش
-            </button>
-        </form>
-
-        <!-- لینک بازگشت -->
-        <div class="text-center mt-6">
-            <a href="/orders"
-                class="inline-flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-800 transition">
-                <i data-lucide="arrow-left"></i> بازگشت به لیست سفارشات
-            </a>
+                <button>بروزرسانی سفارش</button>
+            </form>
         </div>
-    </div>
 
-    <script>
-        lucide.createIcons();
-    </script>
-
-</body>
+    </body>
 
 </html>

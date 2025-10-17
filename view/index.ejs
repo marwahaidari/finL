@@ -48,54 +48,52 @@
                 </a>
                 <% } %>
     </header>
+    <%- include('layouts/header') %>
 
-    <!-- Stats Section -->
-    <section class="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        <div class="bg-white shadow-lg p-6 rounded-xl text-center">
-            <h3 class="text-2xl font-bold text-green-500">
-                <%= (stats && stats.totalUsers) ? stats.totalUsers : 0 %>
-            </h3>
-            <p class="text-gray-600">کاربران</p>
-        </div>
-        <div class="bg-white shadow-lg p-6 rounded-xl text-center">
-            <h3 class="text-2xl font-bold text-blue-500">
-                <%= (stats && stats.totalOrders) ? stats.totalOrders : 0 %>
-            </h3>
-            <p class="text-gray-600">سفارش‌ها</p>
-        </div>
-        <div class="bg-white shadow-lg p-6 rounded-xl text-center">
-            <h3 class="text-2xl font-bold text-yellow-500">
-                <%= (stats && stats.totalRequests) ? stats.totalRequests : 0 %>
-            </h3>
-            <p class="text-gray-600">درخواست‌ها</p>
-        </div>
-    </section>
+        <!-- Stats Section -->
+        <section class="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div class="bg-white shadow-lg p-6 rounded-xl text-center">
+                <h3 class="text-2xl font-bold text-green-500">
+                    <%= (stats && stats.totalUsers) ? stats.totalUsers : 0 %>
+                </h3>
+                <p class="text-gray-600">کاربران</p>
+            </div>
+            <div class="bg-white shadow-lg p-6 rounded-xl text-center">
+                <h3 class="text-2xl font-bold text-blue-500">
+                    <%= (stats && stats.totalOrders) ? stats.totalOrders : 0 %>
+                </h3>
+                <p class="text-gray-600">سفارش‌ها</p>
+            </div>
+            <div class="bg-white shadow-lg p-6 rounded-xl text-center">
+                <h3 class="text-2xl font-bold text-yellow-500">
+                    <%= (stats && stats.totalRequests) ? stats.totalRequests : 0 %>
+                </h3>
+                <p class="text-gray-600">درخواست‌ها</p>
+            </div>
+        </section>
 
-    <!-- Features Section -->
-    <section class="bg-gray-100 py-16">
-        <div class="max-w-7xl mx-auto px-6">
-            <h3 class="text-3xl font-bold text-center mb-12">خدمات ویژه ما</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-white shadow-lg rounded-xl p-6 hover:shadow-2xl transition">
-                    <h4 class="text-xl font-semibold mb-3">امنیت بالا</h4>
-                    <p class="text-gray-600">ورود دو مرحله‌ای، رمزگذاری و سیستم ضد حمله بروت فورس.</p>
-                </div>
-                <div class="bg-white shadow-lg rounded-xl p-6 hover:shadow-2xl transition">
-                    <h4 class="text-xl font-semibold mb-3">پروفایل کامل</h4>
-                    <p class="text-gray-600">مدیریت حساب، آپلود تصویر پروفایل و تغییر رمز عبور.</p>
-                </div>
-                <div class="bg-white shadow-lg rounded-xl p-6 hover:shadow-2xl transition">
-                    <h4 class="text-xl font-semibold mb-3">بازیابی سریع</h4>
-                    <p class="text-gray-600">بازیابی رمز از طریق ایمیل و لینک امن.</p>
+        <!-- Features Section -->
+        <section class="bg-gray-100 py-16">
+            <div class="max-w-7xl mx-auto px-6">
+                <h3 class="text-3xl font-bold text-center mb-12">خدمات ویژه ما</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-white shadow-lg rounded-xl p-6 hover:shadow-2xl transition">
+                        <h4 class="text-xl font-semibold mb-3">امنیت بالا</h4>
+                        <p class="text-gray-600">ورود دو مرحله‌ای، رمزگذاری و سیستم ضد حمله بروت فورس.</p>
+                    </div>
+                    <div class="bg-white shadow-lg rounded-xl p-6 hover:shadow-2xl transition">
+                        <h4 class="text-xl font-semibold mb-3">پروفایل کامل</h4>
+                        <p class="text-gray-600">مدیریت حساب، آپلود تصویر پروفایل و تغییر رمز عبور.</p>
+                    </div>
+                    <div class="bg-white shadow-lg rounded-xl p-6 hover:shadow-2xl transition">
+                        <h4 class="text-xl font-semibold mb-3">بازیابی سریع</h4>
+                        <p class="text-gray-600">بازیابی رمز از طریق ایمیل و لینک امن.</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-gray-300 text-center py-6 mt-12">
-        <p>© <%= new Date().getFullYear() %> پرتال دولت الکترونیک. همه حقوق محفوظ است.</p>
-    </footer>
+        <%- include('layouts/footer') %>
 
 </body>
 

@@ -1,36 +1,98 @@
-<h1>Manage Orders</h1>
-<table border="1" cellpadding="5">
-    <tr>
-        <th>ID</th>
-        <th>User</th>
-        <th>Title</th>
-        <th>Description</th>
-        <th>Created At</th>
-        <th>Actions</th>
-    </tr>
-    <% orders.forEach(o=> { %>
-        <tr>
-            <td>
-                <%= o.id %>
-            </td>
-            <td>
-                <%= o.user_id %>
-            </td>
-            <td>
-                <%= o.title %>
-            </td>
-            <td>
-                <%= o.description %>
-            </td>
-            <td>
-                <%= new Date(o.created_at).toLocaleString() %>
-            </td>
-            <td>
-                <form action="/admin/orders/delete/<%= o.id %>" method="POST"
-                    onsubmit="return confirm('Delete order?')">
-                    <button type="submit">Delete</button>
-                </form>
-            </td>
-        </tr>
-        <% }) %>
-</table>
+<%- include('../layouts/header') %>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Manage Orders</h1>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-200 shadow-sm rounded-lg">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-gray-600 font-medium">ID</th>
+                        <th class="px-4 py-2 text-left text-gray-600 font-medium">User</th>
+                        <th class="px-4 py-2 text-left text-gray-600 font-medium">Title</th>
+                        <th class="px-4 py-2 text-left text-gray-600 font-medium">Description</th>
+                        <th class="px-4 py-2 text-left text-gray-600 font-medium">Status</th>
+                        <th class="px-4 py-2 text-left text-gray-600 font-medium">Paid</th>
+                        <th class="px-4 py-2 text-left text-gray-600 font-medium">Created At</th>
+                        <th class="px-4 py-2 text-left text-gray-600 font-medium">Attachments</th>
+                        <th class="px-4 py-2 text-left text-gray-600 font-medium">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% orders.forEach(o=> { %>
+                        <tr class="hover:bg-gray-50 border-b border-gray-200">
+                            <td class="px-4 py-2 text-gray-700">
+                                <%= o.id %>
+                            </td>
+                            <td class="px-4 py-2 text-gray-700">
+                                <%= o.user_name %>
+                            </td>
+                            <td class="px-4 py-2 text-gray-700">
+                                <%= o.title %>
+                            </td>
+                            <td class="px-4 py-2 text-gray-700">
+                                <%= o.description %>
+                            </td>
+                            <td class="px-4 py-2 text-gray-700 capitalize">
+                                <%= o.status %>
+                            </td>
+                            <td class="px-4 py-2 text-gray-700">
+                                <%= o.paid ? 'Yes' : 'No' %>
+                            </td>
+                            <td class="px-4 py-2 text-gray-700">
+                                <%= new Date(o.created_at).toLocaleString() %>
+                            </td>
+                            <td class="px-4 py-2 text-gray-700">
+                                <% if(o.attachments && o.attachments.length> 0) { %>
+                                    <% o.attachments.forEach(file=> { %>
+                                        <a href="<%= file.filepath %>" class="text-blue-500 hover:underline"
+                                            target="_blank">
+                                            <%= file.filename %>
+                                        </a><br />
+                                        <% }) %>
+                                            <% } else { %>
+                                                None
+                                                <% } %>
+                            </td>
+                            <td class="px-4 py-2 flex flex-wrap gap-2">
+                                <a href="/admin/orders/view/<%= o.id %>"
+                                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm">View</a>
+                                <a href="/admin/orders/edit/<%= o.id %>"
+                                    class="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded-md text-sm">Edit</a>
+                                <% if(!o.paid) { %>
+                                    <form action="/admin/orders/pay/<%= o.id %>" method="POST" class="inline">
+                                        <button type="submit"
+                                            class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm">
+                                            Pay
+                                        </button>
+                                    </form>
+                                    <% } %>
+                                        <form action="/admin/orders/delete/<%= o.id %>" method="POST"
+                                            onsubmit="return confirm('Are you sure you want to delete this order?')"
+                                            class="inline">
+                                            <button type="submit"
+                                                class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm">
+                                                Delete
+                                            </button>
+                                        </form>
+                            </td>
+                        </tr>
+                        <% }) %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <% if(totalPages && totalPages> 1) { %>
+            <div class="mt-4 flex justify-center space-x-2">
+                <% for(let i=1; i<=totalPages; i++) { %>
+                    <a href="?page=<%= i %>"
+                        class="px-3 py-1 rounded-md <%= i === page ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700' %>">
+                        <%= i %>
+                    </a>
+                    <% } %>
+            </div>
+            <% } %>
+    </div>
+
+    <%- include('../layouts/footer') %>

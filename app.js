@@ -13,12 +13,12 @@ dotenv.config();
 // Database pool
 const pool = require('./db');
 
-// Routers (may throw if paths are wrong)
+// Routers
 const authRouter = require('./routes/auth');
 const indexRouter = require('./routes/index');
 const orderRouter = require('./routes/orderRoutes');
 const assignmentRoutes = require('./routes/assignmentRoutes');
-// const notificationRoutes = require('./routes/notificationRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const requestsRouter = require('./routes/request');
 const paymentRoutes = require('./routes/paymentRoutes');
 const settingsRoutes = require('./routes/settings');
@@ -41,12 +41,10 @@ function isMiddleware(fn) {
 }
 
 function mount(name, pathOrRouter, maybeRouter) {
-    // mount(name, path, router) OR mount(name, router) for root mount
     let mountPath = null;
     let router = null;
 
     if (maybeRouter === undefined) {
-        // mount(name, router)
         router = pathOrRouter;
         mountPath = typeof name === 'string' ? name : '/';
     } else {
@@ -76,8 +74,7 @@ app.set('io', io);
 // View engine
 // ===========================
 app.set('view engine', 'ejs');
-// If your views folder is named "views" use 'views'. You had 'view' originally — update if necessary.
-app.set('views', path.join(__dirname, 'view')); // change 'view' -> 'views' if your folder is named views
+app.set('views', path.join(__dirname, 'view')); // فولدر view درست است
 
 // ===========================
 // Body parser
@@ -105,6 +102,7 @@ app.use(session({
     saveUninitialized: true,
 }));
 
+// Connect-flash بعد از session
 app.use(flash());
 
 // Make flash messages available in all views
@@ -115,7 +113,20 @@ app.use((req, res, next) => {
 });
 
 // ===========================
-// Rate limiting (validate middlewares)
+// Enable 2FA Route
+// ===========================
+app.use('/egov', require('./routes/enable2fa'));
+
+
+// Make flash messages available in all views
+app.use((req, res, next) => {
+    res.locals.success_msg = req.flash('success_msg');
+    res.locals.error_msg = req.flash('error_msg');
+    next();
+});
+
+// ===========================
+// Rate limiting
 // ===========================
 if (isMiddleware(apiLimiter)) {
     app.use('/api', apiLimiter);
@@ -139,16 +150,15 @@ if (isMiddleware(adminLimiter)) {
 }
 
 // ===========================
-// Routes (safe mounting)
+// Routes
 // ===========================
-// ترتیب روت‌ها مهمه
 app.use('/', indexRouter);
 app.use('/', authRouter);
 app.use('/', dashboardRoutes);
-app.use('/orderRoutes', orderRouter);
+app.use('/orders', orderRouter);            // path اصلاح شد
 app.use('/assignments', assignmentRoutes);
 app.use('/requests', requestsRouter);
-// app.use('/notifications', notificationRoutes);
+app.use('/notifications', notificationRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api', backupRoutes);
 app.use('/api/payments', paymentRoutes);
@@ -184,6 +194,31 @@ app.use((err, req, res, next) => {
     console.error('💥 Unhandled error:', err);
     if (!res.headersSent) {
         res.status(500).send('Internal Server Error');
+    }
+});
+
+// فقط برای تست صفحه 2FA بدون Notification
+app.get('/egov/2fa-test', async (req, res) => {
+    try {
+        // یک کاربر mock برای تست
+        const user = {
+            id: 1,
+            username: 'testuser',
+            email: 'test@example.com',
+            twoFA: {} // بدون secret یا backup code
+        };
+
+        res.render('enable2fa', {
+            qrDataUrl: undefined,
+            secret: undefined,
+            backupCodes: [],
+            success_msg: '',
+            error_msg: '',
+            user
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('خطا در بارگذاری صفحه تست 2FA');
     }
 });
 

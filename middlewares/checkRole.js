@@ -3,7 +3,7 @@
  * Flexible role middleware
  */
 
-const AuditLog = require('../utils/Audit');
+const Audit = require('../utils/Audit'); // ✅ نام درست ماژول
 
 function checkRole(roles, options = {}) {
     return async (req, res, next) => {
@@ -14,20 +14,29 @@ function checkRole(roles, options = {}) {
             }
 
             const userRole = req.session.user.role;
-            const allowed = Array.isArray(roles) ? roles.includes(userRole) : userRole === roles;
+            const allowed = Array.isArray(roles)
+                ? roles.includes(userRole)
+                : userRole === roles;
 
             if (!allowed) {
+                // ✅ از Audit.log استفاده می‌کنیم، نه Audit.create
                 if (options.audit !== false) {
-                    await AuditLog.create(
-                        req.session.user.id,
-                        `⚠️ Unauthorized access attempt to ${req.originalUrl} with role ${userRole}`
-                    );
+                    await Audit.log({
+                        userId: req.session.user.id,
+                        eventType: 'UNAUTHORIZED_ROLE_ACCESS',
+                        message: `Unauthorized access to ${req.originalUrl} with role ${userRole}`,
+                        ip: req.ip,
+                        url: req.originalUrl,
+                    });
                 }
 
                 req.flash('error_msg', options.message || '❌ Access denied');
-                return res.status(options.status || 403).redirect(options.redirect || '/dashboard');
+                return res
+                    .status(options.status || 403)
+                    .redirect(options.redirect || '/dashboard');
             }
 
+            // ✅ اگر مجاز بود، ادامه بده
             next();
         } catch (err) {
             console.error('checkRole error:', err);

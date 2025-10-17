@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazir&display=swap" rel="stylesheet">
+
     <style>
         body {
             font-family: 'Vazir', sans-serif;
@@ -70,253 +71,257 @@
         }
     </style>
 </head>
+<%- include('layouts/header') %>
 
-<body class="bg-gray-50 text-gray-800 font-sans">
+    <body class="bg-gray-50 text-gray-800 font-sans">
 
-    <!-- Header -->
-    <header class="bg-blue-900 text-white shadow p-4 flex items-center justify-between sticky top-0 z-50">
-        <h1 class="text-2xl font-bold flex items-center gap-2">
-            <i data-lucide="layout-dashboard"></i> داشبورد مدیریت
-        </h1>
-        <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-1">
-            <i data-lucide="log-out"></i> خروج
-        </a>
-    </header>
+        <!-- Header -->
+        <header class="bg-blue-900 text-white shadow p-4 flex items-center justify-between sticky top-0 z-50">
+            <h1 class="text-2xl font-bold flex items-center gap-2">
+                <i data-lucide="layout-dashboard"></i> داشبورد مدیریت
+            </h1>
+            <a href="/logout"
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-1">
+                <i data-lucide="log-out"></i> خروج
+            </a>
+        </header>
 
-    <main class="p-6 space-y-8">
+        <main class="p-6 space-y-8">
 
-        <!-- آمار کلی -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div
-                class="bg-blue-600 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center card">
-                <i data-lucide="shopping-cart" class="mb-2"></i>
-                <p>کل سفارش‌ها</p>
-                <p class="text-3xl font-bold count-up" data-target="<%= stats.total_orders %>">0</p>
-            </div>
-            <div
-                class="bg-green-600 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center card">
-                <i data-lucide="check-circle" class="mb-2"></i>
-                <p>سفارش‌های پرداخت‌شده</p>
-                <p class="text-3xl font-bold count-up" data-target="<%= stats.paid_orders %>">0</p>
-            </div>
-            <div
-                class="bg-yellow-500 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center card">
-                <i data-lucide="clock" class="mb-2"></i>
-                <p>در حال انجام</p>
-                <p class="text-3xl font-bold count-up" data-target="<%= stats.pending_orders %>">0</p>
-            </div>
-            <div
-                class="bg-indigo-600 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center card">
-                <i data-lucide="check-square" class="mb-2"></i>
-                <p>تکمیل‌شده</p>
-                <p class="text-3xl font-bold count-up" data-target="<%= stats.completed_orders %>">0</p>
-            </div>
-        </section>
+            <!-- آمار کلی -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div
+                    class="bg-blue-600 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center card">
+                    <i data-lucide="shopping-cart" class="mb-2"></i>
+                    <p>کل سفارش‌ها</p>
+                    <p class="text-3xl font-bold count-up" data-target="<%= stats.total_orders %>">0</p>
+                </div>
+                <div
+                    class="bg-green-600 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center card">
+                    <i data-lucide="check-circle" class="mb-2"></i>
+                    <p>سفارش‌های پرداخت‌شده</p>
+                    <p class="text-3xl font-bold count-up" data-target="<%= stats.paid_orders %>">0</p>
+                </div>
+                <div
+                    class="bg-yellow-500 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center card">
+                    <i data-lucide="clock" class="mb-2"></i>
+                    <p>در حال انجام</p>
+                    <p class="text-3xl font-bold count-up" data-target="<%= stats.pending_orders %>">0</p>
+                </div>
+                <div
+                    class="bg-indigo-600 text-white p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center card">
+                    <i data-lucide="check-square" class="mb-2"></i>
+                    <p>تکمیل‌شده</p>
+                    <p class="text-3xl font-bold count-up" data-target="<%= stats.completed_orders %>">0</p>
+                </div>
+            </section>
 
-        <!-- فیلتر و جستجو -->
-        <section class="bg-white p-5 rounded-2xl shadow-lg card">
-            <form class="grid md:grid-cols-4 gap-4" method="GET" action="/dashboard">
-                <input type="text" name="q" placeholder="جستجو..." value="<%= q || '' %>"
-                    class="border p-2 rounded-lg focus:outline-none focus:ring focus:ring-blue-300 w-full" />
-                <select name="status" class="border p-2 rounded-lg">
-                    <option value="">همه وضعیت‌ها</option>
-                    <option value="pending" <%=status==='pending' ?'selected':'' %>>در حال انجام</option>
-                    <option value="completed" <%=status==='completed' ?'selected':'' %>>تکمیل‌شده</option>
-                    <option value="canceled" <%=status==='canceled' ?'selected':'' %>>لغوشده</option>
-                </select>
-                <select name="priority" class="border p-2 rounded-lg">
-                    <option value="">همه اولویت‌ها</option>
-                    <option value="high" <%=priority==='high' ?'selected':'' %>>بالا</option>
-                    <option value="normal" <%=priority==='normal' ?'selected':'' %>>معمولی</option>
-                    <option value="low" <%=priority==='low' ?'selected':'' %>>پایین</option>
-                </select>
-                <button type="submit"
-                    class="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-1">
-                    <i data-lucide="search"></i> جستجو
-                </button>
-            </form>
-        </section>
+            <!-- فیلتر و جستجو -->
+            <section class="bg-white p-5 rounded-2xl shadow-lg card">
+                <form class="grid md:grid-cols-4 gap-4" method="GET" action="/dashboard">
+                    <input type="text" name="q" placeholder="جستجو..." value="<%= q || '' %>"
+                        class="border p-2 rounded-lg focus:outline-none focus:ring focus:ring-blue-300 w-full" />
+                    <select name="status" class="border p-2 rounded-lg">
+                        <option value="">همه وضعیت‌ها</option>
+                        <option value="pending" <%=status==='pending' ?'selected':'' %>>در حال انجام</option>
+                        <option value="completed" <%=status==='completed' ?'selected':'' %>>تکمیل‌شده</option>
+                        <option value="canceled" <%=status==='canceled' ?'selected':'' %>>لغوشده</option>
+                    </select>
+                    <select name="priority" class="border p-2 rounded-lg">
+                        <option value="">همه اولویت‌ها</option>
+                        <option value="high" <%=priority==='high' ?'selected':'' %>>بالا</option>
+                        <option value="normal" <%=priority==='normal' ?'selected':'' %>>معمولی</option>
+                        <option value="low" <%=priority==='low' ?'selected':'' %>>پایین</option>
+                    </select>
+                    <button type="submit"
+                        class="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-1">
+                        <i data-lucide="search"></i> جستجو
+                    </button>
+                </form>
+            </section>
 
-        <!-- لیست سفارش‌ها -->
-        <section class="bg-white p-5 rounded-2xl shadow-lg overflow-x-auto card">
-            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                <i data-lucide="clipboard-list"></i> سفارش‌ها
-            </h2>
-            <table class="w-full text-sm text-center border-collapse">
-                <thead class="bg-gray-200">
-                    <tr>
-                        <th class="p-2">#</th>
-                        <th class="p-2">عنوان</th>
-                        <th class="p-2">کاربر</th>
-                        <th class="p-2">وضعیت</th>
-                        <th class="p-2">اولویت</th>
-                        <th class="p-2">پرداخت</th>
-                        <th class="p-2">تاریخ</th>
-                        <th class="p-2">عملیات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% orders.forEach((order,index)=> { %>
-                        <tr class="border-b transition-colors duration-200">
-                            <td class="p-2">
-                                <%= index+1 %>
-                            </td>
-                            <td class="p-2 font-semibold">
-                                <%= order.title %>
-                            </td>
-                            <td class="p-2">
-                                <%= order.user_name || order.user?.full_name %>
-                            </td>
-                            <td class="p-2 font-medium text-sm">
-                                <% if(order.status==='pending' ){ %>
-                                    <span class="text-yellow-600 font-bold">⚠️ در حال انجام</span>
-                                    <% } else if(order.status==='completed' ){ %>
-                                        <span class="text-blue-600 font-bold">✅ تکمیل‌شده</span>
-                                        <% } else if(order.status==='canceled' ){ %>
-                                            <span class="text-red-600 font-bold">❌ لغوشده</span>
-                                            <% } %>
-                            </td>
-                            <td class="p-2 capitalize">
-                                <span class="<%= order.priority==='high'?'badge-pulse bg-red-500 text-white px-2 py-1 rounded-full font-semibold':
-                                            order.priority==='normal'?'bg-yellow-400 text-white px-2 py-1 rounded-full font-semibold':
-                                            'bg-green-500 text-white px-2 py-1 rounded-full font-semibold' %>">
-                                    <%= order.priority %>
-                                </span>
-                            </td>
-                            <td class="p-2 font-bold">
-                                <% if(order.paid){ %>
-                                    <span class="text-green-600">✅ پرداخت شده</span>
-                                    <% } else { %>
-                                        <span class="text-red-600">❌</span>
-                                        <% } %>
-                            </td>
-                            <td class="p-2">
-                                <%= new Date(order.created_at).toLocaleDateString('fa-IR') %>
-                            </td>
-                            <td class="p-2 flex items-center justify-center gap-2">
-                                <a href="/orders/<%= order.id %>"
-                                    class="text-blue-600 hover:underline flex items-center gap-1">
-                                    <i data-lucide="eye"></i> مشاهده
-                                </a>
-                                <a href="/orders/edit/<%= order.id %>"
-                                    class="text-yellow-600 hover:underline flex items-center gap-1">
-                                    <i data-lucide="edit"></i> ویرایش
-                                </a>
-                                <form method="POST" action="/orders/delete/<%= order.id %>"
-                                    onsubmit="return confirm('مطمئنی؟')" class="inline">
-                                    <button class="text-red-600 hover:underline flex items-center gap-1">
-                                        <i data-lucide="trash-2"></i> حذف
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        <% }) %>
-                </tbody>
-            </table>
-        </section>
-
-        <!-- آخرین سفارش‌ها -->
-        <section class="bg-white p-5 rounded-2xl shadow-lg card">
-            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                <i data-lucide="clock"></i> آخرین سفارش‌ها
-            </h2>
-            <ul class="space-y-2">
-                <% recentOrders.forEach(o=> { %>
-                    <li
-                        class="flex justify-between items-center border-b pb-1 hover:bg-gray-50 transition-colors duration-200">
-                        <span>
-                            <%= o.title %>
-                        </span>
-                        <span class="text-gray-500 text-sm">
-                            <%= new Date(o.created_at).toLocaleDateString('fa-IR') %>
-                        </span>
-                    </li>
-                    <% }) %>
-            </ul>
-        </section>
-
-        <!-- کاربران -->
-        <% if(users && users.length>0){ %>
+            <!-- لیست سفارش‌ها -->
             <section class="bg-white p-5 rounded-2xl shadow-lg overflow-x-auto card">
                 <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <i data-lucide="users"></i> کاربران
+                    <i data-lucide="clipboard-list"></i> سفارش‌ها
                 </h2>
                 <table class="w-full text-sm text-center border-collapse">
                     <thead class="bg-gray-200">
                         <tr>
                             <th class="p-2">#</th>
-                            <th class="p-2">نام</th>
-                            <th class="p-2">ایمیل</th>
-                            <th class="p-2">نقش</th>
+                            <th class="p-2">عنوان</th>
+                            <th class="p-2">کاربر</th>
+                            <th class="p-2">وضعیت</th>
+                            <th class="p-2">اولویت</th>
+                            <th class="p-2">پرداخت</th>
+                            <th class="p-2">تاریخ</th>
+                            <th class="p-2">عملیات</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <% users.forEach((u,index)=> { %>
+                        <% orders.forEach((order,index)=> { %>
                             <tr class="border-b transition-colors duration-200">
                                 <td class="p-2">
                                     <%= index+1 %>
                                 </td>
-                                <td class="p-2">
-                                    <%= u.name %>
+                                <td class="p-2 font-semibold">
+                                    <%= order.title %>
                                 </td>
                                 <td class="p-2">
-                                    <%= u.email %>
+                                    <%= order.user_name || order.user?.full_name %>
                                 </td>
-                                <td class="p-2 capitalize font-medium">
-                                    <%= u.role %>
+                                <td class="p-2 font-medium text-sm">
+                                    <% if(order.status==='pending' ){ %>
+                                        <span class="text-yellow-600 font-bold">⚠️ در حال انجام</span>
+                                        <% } else if(order.status==='completed' ){ %>
+                                            <span class="text-blue-600 font-bold">✅ تکمیل‌شده</span>
+                                            <% } else if(order.status==='canceled' ){ %>
+                                                <span class="text-red-600 font-bold">❌ لغوشده</span>
+                                                <% } %>
+                                </td>
+                                <td class="p-2 capitalize">
+                                    <span class="<%= order.priority==='high'?'badge-pulse bg-red-500 text-white px-2 py-1 rounded-full font-semibold':
+                                            order.priority==='normal'?'bg-yellow-400 text-white px-2 py-1 rounded-full font-semibold':
+                                            'bg-green-500 text-white px-2 py-1 rounded-full font-semibold' %>">
+                                        <%= order.priority %>
+                                    </span>
+                                </td>
+                                <td class="p-2 font-bold">
+                                    <% if(order.paid){ %>
+                                        <span class="text-green-600">✅ پرداخت شده</span>
+                                        <% } else { %>
+                                            <span class="text-red-600">❌</span>
+                                            <% } %>
+                                </td>
+                                <td class="p-2">
+                                    <%= new Date(order.created_at).toLocaleDateString('fa-IR') %>
+                                </td>
+                                <td class="p-2 flex items-center justify-center gap-2">
+                                    <a href="/orders/<%= order.id %>"
+                                        class="text-blue-600 hover:underline flex items-center gap-1">
+                                        <i data-lucide="eye"></i> مشاهده
+                                    </a>
+                                    <a href="/orders/edit/<%= order.id %>"
+                                        class="text-yellow-600 hover:underline flex items-center gap-1">
+                                        <i data-lucide="edit"></i> ویرایش
+                                    </a>
+                                    <form method="POST" action="/orders/delete/<%= order.id %>"
+                                        onsubmit="return confirm('مطمئنی؟')" class="inline">
+                                        <button class="text-red-600 hover:underline flex items-center gap-1">
+                                            <i data-lucide="trash-2"></i> حذف
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                             <% }) %>
                     </tbody>
                 </table>
             </section>
-            <% } %>
 
-    </main>
+            <!-- آخرین سفارش‌ها -->
+            <section class="bg-white p-5 rounded-2xl shadow-lg card">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i data-lucide="clock"></i> آخرین سفارش‌ها
+                </h2>
+                <ul class="space-y-2">
+                    <% recentOrders.forEach(o=> { %>
+                        <li
+                            class="flex justify-between items-center border-b pb-1 hover:bg-gray-50 transition-colors duration-200">
+                            <span>
+                                <%= o.title %>
+                            </span>
+                            <span class="text-gray-500 text-sm">
+                                <%= new Date(o.created_at).toLocaleDateString('fa-IR') %>
+                            </span>
+                        </li>
+                        <% }) %>
+                </ul>
+            </section>
 
-    <script>
-        lucide.createIcons();
+            <!-- کاربران -->
+            <% if(users && users.length>0){ %>
+                <section class="bg-white p-5 rounded-2xl shadow-lg overflow-x-auto card">
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <i data-lucide="users"></i> کاربران
+                    </h2>
+                    <table class="w-full text-sm text-center border-collapse">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="p-2">#</th>
+                                <th class="p-2">نام</th>
+                                <th class="p-2">ایمیل</th>
+                                <th class="p-2">نقش</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% users.forEach((u,index)=> { %>
+                                <tr class="border-b transition-colors duration-200">
+                                    <td class="p-2">
+                                        <%= index+1 %>
+                                    </td>
+                                    <td class="p-2">
+                                        <%= u.name %>
+                                    </td>
+                                    <td class="p-2">
+                                        <%= u.email %>
+                                    </td>
+                                    <td class="p-2 capitalize font-medium">
+                                        <%= u.role %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                        </tbody>
+                    </table>
+                </section>
+                <% } %>
 
-        const counters = document.querySelectorAll('.count-up');
-        counters.forEach(counter => {
-            const target = +counter.dataset.target;
-            let count = 0;
-            const step = Math.ceil(target / 100);
-            const observer = new IntersectionObserver(entries => {
+        </main>
+
+        <script>
+            lucide.createIcons();
+
+            const counters = document.querySelectorAll('.count-up');
+            counters.forEach(counter => {
+                const target = +counter.dataset.target;
+                let count = 0;
+                const step = Math.ceil(target / 100);
+                const observer = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const interval = setInterval(() => {
+                                count += step;
+                                if (count >= target) {
+                                    counter.textContent = target;
+                                    counter.style.transform = 'scale(1)';
+                                    counter.style.opacity = 1;
+                                    clearInterval(interval);
+                                } else {
+                                    counter.textContent = count;
+                                    counter.style.transform = `scale(${1 + 0.5 * (count / target)})`;
+                                    counter.style.opacity = `${count / target}`;
+                                }
+                            }, 15);
+                            observer.unobserve(counter);
+                        }
+                    });
+                }, { threshold: 0.5 });
+                observer.observe(counter);
+            });
+
+            const cards = document.querySelectorAll('.card');
+            const cardObserver = new IntersectionObserver(entries => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        const interval = setInterval(() => {
-                            count += step;
-                            if (count >= target) {
-                                counter.textContent = target;
-                                counter.style.transform = 'scale(1)';
-                                counter.style.opacity = 1;
-                                clearInterval(interval);
-                            } else {
-                                counter.textContent = count;
-                                counter.style.transform = `scale(${1 + 0.5 * (count / target)})`;
-                                counter.style.opacity = `${count / target}`;
-                            }
-                        }, 15);
-                        observer.unobserve(counter);
+                        entry.target.classList.add('visible');
+                        cardObserver.unobserve(entry.target);
                     }
                 });
-            }, { threshold: 0.5 });
-            observer.observe(counter);
-        });
+            }, { threshold: 0.3 });
+            cards.forEach(card => cardObserver.observe(card));
+        </script>
 
-        const cards = document.querySelectorAll('.card');
-        const cardObserver = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                    cardObserver.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.3 });
-        cards.forEach(card => cardObserver.observe(card));
-    </script>
+        <%- include('layouts/footer') %>
 
-</body>
+    </body>
 
 </html>

@@ -1,11 +1,13 @@
+// routes/auth.js
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
-const authController = require('../controllers/authController'); // درست است
+const path = require('path'); // ✅ Added
+const authController = require('../controllers/authController');
 const { ensureAuthenticated } = require('../middlewares/authMiddleware');
-const multer = require('multer');
-const path = require('path');
+const { redirectIfAuthenticated } = require('../middlewares/authRedirect');
 const rateLimit = require('express-rate-limit');
+const multer = require('multer');
 
 // =============================
 // Rate Limiter for Security
@@ -37,7 +39,7 @@ const upload = multer({
 // =============================
 // Registration Routes
 // =============================
-router.get('/register', authController.registerPage);
+router.get('/register', redirectIfAuthenticated, authController.registerPage);
 router.post(
   '/register',
   [
@@ -53,35 +55,20 @@ router.post(
 // Verification Routes
 // =============================
 router.get('/verify/:token', authController.verifyEmail);
-router.get('/verify-sms/:code', authController.verifyPhone);
 
 // =============================
 // Login Routes
 // =============================
-router.get('/login', authController.loginPage);
-router.post('/login',
+router.get('/login', redirectIfAuthenticated, authController.loginPage);
+router.post(
+  '/login',
   loginLimiter,
-  (req, res, next) => {
-    console.log('>>> ROUTE /login hit', { body: req.body, headers: { host: req.headers.host } });
-    next();
-  },
   [
     body('identifier').notEmpty().withMessage('Email, National ID, or Phone is required'),
     body('password').notEmpty().withMessage('Password is required'),
   ],
-  (req, res, next) => {
-    // show validationResult quickly
-    const { validationResult } = require('express-validator');
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      console.log('>>> /login validation failed:', errors.array());
-      return res.render('login', { error: errors.array()[0].msg, oldInput: req.body });
-    }
-    next();
-  },
   authController.login
 );
-
 
 // =============================
 // 2FA Routes
@@ -89,32 +76,10 @@ router.post('/login',
 router.get('/2fa/setup', ensureAuthenticated, authController.enable2FA);
 router.post('/2fa/verify', ensureAuthenticated, authController.verify2FA);
 
-// =============================
-// Logout Routes
-// =============================
 router.get('/logout', ensureAuthenticated, authController.logout);
-router.post('/logout-all', ensureAuthenticated, authController.logoutOtherSessions);
 
-// =============================
-// Password Recovery
-// =============================
-router.get('/forgot-password', authController.forgotPasswordPage);
-router.post('/forgot-password', authController.forgotPassword);
-router.get('/reset/:token', authController.resetPasswordPage);
-router.post('/reset/:token', authController.resetPassword);
-
-// =============================
-// Profile Management
-// =============================
 router.get('/profile', ensureAuthenticated, authController.profile);
-router.post('/profile', ensureAuthenticated, upload.single('avatar'), authController.updateProfile);
+router.post('/profile', ensureAuthenticated, upload.single('photo'), authController.updateProfile);
 router.post('/profile/change-password', ensureAuthenticated, authController.changePassword);
-router.post('/profile/upload-photo', ensureAuthenticated, authController.uploadProfilePhoto);
-router.post('/profile/delete-account', ensureAuthenticated, authController.deleteAccount);
-
-// =============================
-// Strong Password Generator (API Example)
-// =============================
-router.get('/generate-password', ensureAuthenticated, authController.generateStrongPassword);
 
 module.exports = router;
