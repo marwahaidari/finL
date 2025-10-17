@@ -11,7 +11,11 @@ console.log("DB_PASSWORD:", process.env.DB_PASSWORD);
 // 📌 Pool Configuration
 // ================================
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    user: process.env.DB_USER,                         // Database username
+    password: process.env.DB_PASSWORD,                 // Database password
+    host: process.env.DB_HOST || "localhost",          // Database host
+    port: parseInt(process.env.DB_PORT) || 5432,       // Database port
+    database: process.env.DB_NAME || "egovdb",         // Database name
     ssl:
         process.env.NODE_ENV === "production"
             ? { rejectUnauthorized: false }
